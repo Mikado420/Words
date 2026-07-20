@@ -65,8 +65,8 @@ const SYSTEM_WORDS_PRESET = [
   {id:'sys_61',english:'judge',phonetic:'/dʒʌdʒ/',japanese:'～を判断する、裁判する',hint:'judge a person by his looks',example:'人を見た目で判断する',derivatives:[{english:'judgment',partOfSpeech:'名',japanese:'判断'}]},
   {id:'sys_62',english:'approach',phonetic:'/əˈproʊtʃ/',japanese:'～に接近する、取り組む',hint:'The plane is approaching Chicago.',example:'飛行機はシカゴに接近している'},
   {id:'sys_63',english:'admit',phonetic:'/ədˈmɪt/',japanese:'～を認める、許可する',hint:'I admit that I was wrong.',example:'自分がまちがっていたと認める',derivatives:[{english:'admission',partOfSpeech:'名',japanese:'入場、入学許可'}]},
-  {id:'sys_64',english:'reflect',phonetic:'/rɪˈflekt/',japanese:'～を反映する、反射する、熟考する',hint:'reflect the mood of the times',example:'時代の気分を反映する',derivatives:[{english:'reflection',partOfSpeech:'名',japanese:'反射、反映、熟考'}]},
-  {id:'sys_65',english:'perform',phonetic:'/pərˈfɔːrm/',japanese:'～を行う、遂行する、演じる',hint:'perform the job',example:'仕事を遂行する',derivatives:[{english:'performance',partOfSpeech:'名',japanese:'遂行、演技、性能'}]},
+  {id:'sys_64',english:'reflect',phonetic:'/rɪˈf20t/',japanese:'～を反映する、反射する、熟考する',hint:'reflect the mood of the times',example:'時代の気分を反映する',derivatives:[{english:'reflection',partOfSpeech:'名',japanese:'反射、反映、熟考'}]},
+  {id:'sys_65',english:'perform',phonetic:'/pərˈfɔːrm/',japanese:'～を行う、遂言する、演じる',hint:'perform the job',example:'仕事を遂行する',derivatives:[{english:'performance',partOfSpeech:'名',japanese:'遂行、演技、性能'}]},
   {id:'sys_66',english:'bore',phonetic:'/bɔːr/',japanese:'～をうんざりさせる、退屈させる',hint:'a very boring movie',example:'すごく退屈な映画',derivatives:[{english:'boring',partOfSpeech:'形',japanese:'退屈な'}]},
   {id:'sys_67',english:'survive',phonetic:'/sərˈvaɪv/',japanese:'生き残る、～より長生きする',hint:'survive in the jungle',example:'ジャングルで生き残る',derivatives:[{english:'survival',partOfSpeech:'名',japanese:'生存、生き残ること'}]},
   {id:'sys_68',english:'represent',phonetic:'/ˌreprɪˈzent/',japanese:'～を表す、示す、代表する',hint:'words represent ideas',example:'言葉は考えを表す',derivatives:[{english:'representative',partOfSpeech:'名',japanese:'代表者'}]},
@@ -178,12 +178,11 @@ const SYSTEM_WORDS_PRESET = [
   {id:'sys_174',english:'sew',phonetic:'/soʊ/',japanese:'～を縫う',hint:'sew a wedding dress',example:'ウェディングドレスを縫う',derivatives:[{english:'sewing machine',partOfSpeech:'名',japanese:'ミシン'}]}
 ];
 
-// 初期設定フォルダ
 const DEFAULT_FOLDERS = [
   {
     id: 'folder_preset_ch1',
     name: 'システム英単語 Ch.1 🔒',
     isPreset: true,
-    wordIds: [] // app.js 起動時にバインド
+    wordIds: []
   }
 ];
