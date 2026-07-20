@@ -1,6 +1,6 @@
-/* ================= スマートフォン特有のレイアウト・ダブルタップ・スクロール防止 ================= */
+/* ================= スマートフォン特有のレイアウト・バグ防止対策 ================= */
 
-/* モバイルWeb用のスクロールバウンスおよびダブルタップによる拡大・ズームを完全に禁止 */
+/* 高速タップ時の拡大・ズームを強制禁止 */
 button,
 a,
 input,
@@ -10,18 +10,19 @@ select,
 #word-question-card,
 #choices-container button {
     touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent; /* タップ時の一瞬のハイライト除去 */
+    -webkit-tap-highlight-color: transparent; /* タップ時の一瞬の青ハイライトを無効化 */
 }
 
+/* 端末の不意な長押しによるテキスト選択やメニュー展開の防止 */
 body {
     overscroll-behavior-y: contain; /* 引っ張り更新の禁止 */
     -webkit-user-select: none;
-    user-select: none; /* テキスト選択ズームバグの防止 */
+    user-select: none;
 }
 
 input, textarea {
     -webkit-user-select: text;
-    user-select: text; /* フォーム入力時のみ通常動作 */
+    user-select: text; /* テキスト入力エリアのみ通常選択可能にする */
 }
 
 /* スクロールバーの非表示・スタイライズ */
@@ -36,7 +37,7 @@ input, textarea {
     border-radius: 9999px;
 }
 
-/* ペットの上下アイドルピコピコモーション */
+/* ペットのアイドルピコピコモーション */
 @keyframes idle {
     0%, 100% {
         transform: translateY(0) scaleY(1);
