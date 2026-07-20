@@ -1,198 +1,175 @@
 /**
- * GamiWord Pro - システム英単語 Ch.1 全174語データベース
+ * GamiWord Pro - システム英単語 Ch.1 データベース (chapter1.js)
+ * 派生語（derivatives）を包含したオブジェクト構造
  */
 
 const SYSTEM_WORDS_PRESET = [
-    { id: 'sys_1', english: 'follow', phonetic: '/ˈfɑːloʊ/', japanese: '～の後に続く、従う', hint: 'follow her advice（助言に従う）', example: 'Follow the instructions carefully.' },
-    { id: 'sys_2', english: 'consider', phonetic: '/kənˈsɪdər/', japanese: '～を考慮する、考える', hint: 'consider the problem seriously（問題を真剣に考える）', example: 'We should consider all options.' },
-    { id: 'sys_3', english: 'increase', phonetic: '/ɪnˈkriːs/', japanese: '増える、～を増やす', hint: 'increase by 20%（20%増加する）', example: 'The population continues to increase.' },
-    { id: 'sys_4', english: 'expect', phonetic: '/ɪkˈspekt/', japanese: '～を予期する、期待する', hint: 'expect you to arrive soon（到着を予期する）', example: 'I expect that they will arrive shortly.' },
-    { id: 'sys_5', english: 'decide', phonetic: '/dɪˈsaɪd/', japanese: '～することを決定する、判断する', hint: 'decide to tell the truth（真実を語る決意をする）', example: 'She decided to study medicine.' },
-    { id: 'sys_6', english: 'develop', phonetic: '/dɪˈveləp/', japanese: '～を発達させる、開発する', hint: 'develop a unique ability（特殊な能力を発達させる）', example: 'They are trying to develop new materials.' },
-    { id: 'sys_7', english: 'provide', phonetic: '/prəˈvaɪd/', japanese: '～を供給する、与える', hint: 'provide him with information（彼に情報を与える）', example: 'The course provides basic skills.' },
-    { id: 'sys_8', english: 'continue', phonetic: '/kənˈtɪnjuː/', japanese: '続く、～を続ける', hint: 'continue to grow fast（急速に成長し続ける）', example: 'He continued working despite the noise.' },
-    { id: 'sys_9', english: 'include', phonetic: '/ɪnˈkluːd/', japanese: '～を含む、含める', hint: 'The list includes his name.（リストに彼の名前を含む）', example: 'The bill includes service charges.' },
-    { id: 'sys_10', english: 'remain', phonetic: '/rɪˈmeɪn/', japanese: '～のままでいる、残る', hint: 'remain silent（黙ったままでいる）', example: 'Many questions still remain unanswered.' },
-    { id: 'sys_11', english: 'reach', phonetic: '/riːtʃ/', japanese: '～に着く、達する', hint: 'reach the mountain top（山頂に到達する）', example: 'We reached our destination at noon.' },
-    { id: 'sys_12', english: 'allow', phonetic: '/əˈlaʊ/', japanese: '～を許可する、許す、可能にする', hint: 'allow him to go out（外出を許可する）', example: 'Computers allow us to work faster.' },
-    { id: 'sys_13', english: 'force', phonetic: '/fɔːrs/', japanese: '～を強制する', hint: 'be forced to work（働くよう強制される）', example: 'He was forced to resign.' },
-    { id: 'sys_14', english: 'offer', phonetic: '/ˈɔːfər/', japanese: '～を申し出る、与える', hint: 'offer help to the poor（援助を申し出る）', example: 'They offered us a warm welcome.' },
-    { id: 'sys_15', english: 'realize', phonetic: '/ˈriːəlaɪz/', japanese: '～を悟る、気づく、実現する', hint: 'realize the error（まちがいを悟る）', example: 'I finally realized my dream.' },
-    { id: 'sys_16', english: 'suggest', phonetic: '/səɡˈdʒest/', japanese: '～と提案する、ほのめかす', hint: 'suggest a new way（新しいやり方を提案する）', example: 'He suggested going for a walk.' },
-    { id: 'sys_17', english: 'require', phonetic: '/rɪˈkwaɪər/', japanese: '～を必要とする、要求する', hint: 'require more attention（もっと注意を必要とする）', example: 'This project requires careful planning.' },
-    { id: 'sys_18', english: 'worry', phonetic: '/ˈwɜːri/', japanese: '心配する、～に心配させる', hint: 'worry about money（お金のことを心配する）', example: 'Don\'t worry about small things.' },
-    { id: 'sys_19', english: 'wonder', phonetic: '/ˈwʌndər/', japanese: '～かと疑問に思う、驚く', hint: 'wonder where he has gone（どこに行ったのかと思う）', example: 'I wonder why she left so early.' },
-    { id: 'sys_20', english: 'cost', phonetic: '/kɔːst/', japanese: '（費用）を要する、～を奪う', hint: 'The car cost me $50,000.（5万ドルかかった）', example: 'The error cost him his job.' },
-    { id: 'sys_21', english: 'tend', phonetic: '/tend/', japanese: 'Vする傾向がある、Vしがちである', hint: 'tend to get angry（腹を立てがちである）', example: 'Prices tend to rise during holidays.' },
-    { id: 'sys_22', english: 'depend', phonetic: '/dɪˈpend/', japanese: 'Aに依存する、Aしだいで決まる', hint: 'Everything depends on him.（すべては彼しだいだ）', example: 'The success depends on your effort.' },
-    { id: 'sys_23', english: 'share', phonetic: '/ʃeər/', japanese: '～を分け合う、共有する', hint: 'share a room with a friend（部屋を共有する）', example: 'They share a common interest.' },
-    { id: 'sys_24', english: 'demand', phonetic: '/dɪˈmænd/', japanese: '～を要求する、必要とする', hint: 'demand more freedom（もっと自由を要求する）', example: 'The workers demand better conditions.' },
-    { id: 'sys_25', english: 'support', phonetic: '/səˈpɔːrt/', japanese: '～を支持する、援助する、養う', hint: 'support the president（大統領を支持する）', example: 'He supports his large family.' },
-    { id: 'sys_26', english: 'hire', phonetic: '/ˈhaɪər/', japanese: '～を雇う、（有料で）借りる', hint: 'hire many young people（多くの若者を雇う）', example: 'We decided to hire a consultant.' },
-    { id: 'sys_27', english: 'regard', phonetic: '/rɪˈɡɑːrd/', japanese: 'AをBとみなす、思う', hint: 'regard him as a friend（友達とみなす）', example: 'I regard her as my best teacher.' },
-    { id: 'sys_28', english: 'base', phonetic: '/beɪs/', japanese: 'AがBに基づいている', hint: 'This story is based on fact.（事実に基づいている）', example: 'The theory is based on research.' },
-    { id: 'sys_29', english: 'improve', phonetic: '/ɪmˈpruːv/', japanese: '～を向上させる、改善する', hint: 'improve living conditions（生活状態を向上させる）', example: 'We need to improve our service.' },
-    { id: 'sys_30', english: 'recognize', phonetic: '/ˈrekəɡnaɪz/', japanese: '～を認める、識別する', hint: 'recognize the importance（重要性を認める）', example: 'I recognized his voice at once.' },
-    { id: 'sys_31', english: 'notice', phonetic: '/ˈnoʊtɪs/', japanese: '～に気づく、～だとわかる', hint: 'notice the color change（色彩の変化に気づく）', example: 'I noticed a small hole in my coat.' },
-    { id: 'sys_32', english: 'suppose', phonetic: '/səˈpoʊz/', japanese: '～だと思う、仮定する、すべきである', hint: 'be supposed to wear a seat belt（締めることになっている）', example: 'What do you suppose happened?' },
-    { id: 'sys_33', english: 'raise', phonetic: '/reɪz/', japanese: '～を上げる、育てる、提起する', hint: 'raise both hands（両手を上げる）', example: 'She raised three kids on her own.' },
-    { id: 'sys_34', english: 'prefer', phonetic: '/prɪˈfɜːr/', japanese: '～をより好む', hint: 'prefer tea to coffee（コーヒーよりお茶を好む）', example: 'I prefer walking to riding a bus.' },
-    { id: 'sys_35', english: 'cheer', phonetic: '/tʃɪər/', japanese: '～を励ます、声援する', hint: 'cheer up the patients（患者たちを元気づける）', example: 'The crowd cheered for the team.' },
-    { id: 'sys_36', english: 'suffer', phonetic: '/ˈsʌfər/', japanese: '経験する、（病気などで）苦しむ', hint: 'suffer heavy damage（ひどい損害を受ける）', example: 'He suffers from severe headaches.' },
-    { id: 'sys_37', english: 'describe', phonetic: '/dɪˈskraɪb/', japanese: '～を描写する、特徴を説明する', hint: 'describe the lost bag（失くしたバッグの特徴を言う）', example: 'Words cannot describe this beauty.' },
-    { id: 'sys_38', english: 'prevent', phonetic: '/prɪˈvent/', japanese: '～をさまたげる、防ぐ', hint: 'prevent him from sleeping（彼が眠るのを妨げる）', example: 'Vaccines prevent many illnesses.' },
-    { id: 'sys_39', english: 'reduce', phonetic: '/rɪˈduːs/', japanese: '～を減らす、変える', hint: 'reduce energy costs（エネルギー費を減らす）', example: 'The price was reduced by 10%.' },
-    { id: 'sys_40', english: 'mistake', phonetic: '/mɪˈsteɪk/', japanese: '～を誤解する、まちがえる', hint: 'mistake salt for sugar（塩を砂糖とまちがえる）', example: 'I mistook her for her sister.' },
-    { id: 'sys_41', english: 'prepare', phonetic: '/prɪˈpeər/', japanese: '準備をする、用意する', hint: 'prepare a room for a guest（客のために部屋を準備する）', example: 'We prepared a detailed report.' },
-    { id: 'sys_42', english: 'encourage', phonetic: '/ɪnˈkɜːrɪdʒ/', japanese: '～をはげます、促進する、すすめる', hint: 'encourage children to read（子供に読書をすすめる）', example: 'My family encouraged me to go.' },
-    { id: 'sys_43', english: 'prove', phonetic: '/pruːv/', japanese: '～だとわかる、～を証明する', hint: 'prove to be true（本当だとわかる）', example: 'His theory proved to be correct.' },
-    { id: 'sys_44', english: 'treat', phonetic: '/triːt/', japanese: '～をあつかう、手当てする、おごる', hint: 'treat him like a child（子供みたいに彼をあつかう）', example: 'She treated us to a nice dinner.' },
-    { id: 'sys_45', english: 'establish', phonetic: '/ɪˈstæblɪʃ/', japanese: '～を設立する、創立する、確定する', hint: 'establish a company（会社を設立する）', example: 'The school was established in 1950.' },
-    { id: 'sys_46', english: 'relate', phonetic: '/rɪˈleɪt/', japanese: '関係がある、～を関係づける', hint: 'stress-related illness（ストレス関係の病気）', example: 'The two events are closely related.' },
-    { id: 'sys_47', english: 'compare', phonetic: '/kəmˈpeər/', japanese: '～を比較する、たとえる', hint: 'compare Japan with China（日本と中国を比較する）', example: 'Do not compare yourself with others.' },
-    { id: 'sys_48', english: 'spread', phonetic: '/spred/', japanese: '～を広げる、広がる', hint: 'spread the tablecloth（テーブルクロスを広げる）', example: 'The news spread rapidly.' },
-    { id: 'sys_49', english: 'refer', phonetic: '/rɪˈfɜːr/', japanese: '～を指し示す、言及する、参照する', hint: 'What does this word refer to?（何を指示するか）', example: 'Please refer to the dictionary.' },
-    { id: 'sys_50', english: 'supply', phonetic: '/səˈplaɪ/', japanese: '～を供給する、支給する', hint: 'supply the city with water（都市に水を供給する）', example: 'The lake supplies water to the town.' },
-    { id: 'sys_51', english: 'gain', phonetic: '/ɡeɪn/', japanese: '～を得る、もうける、増やす', hint: 'gain useful knowledge（有益な知識を得る）', example: 'He gained valuable experience.' },
-    { id: 'sys_52', english: 'destroy', phonetic: '/dɪˈstrɔɪ/', japanese: '～を破壊する、滅ぼす', hint: 'destroy forests（森林を破壊する）', example: 'The fire destroyed the building.' },
-    { id: 'sys_53', english: 'apply', phonetic: '/əˈplaɪ/', japanese: '当てはめる、当てはまる、申し込む', hint: 'apply the rule to every case（規則を当てはめる）', example: 'She applied for the vacancy.' },
-    { id: 'sys_54', english: 'seek', phonetic: '/siːk/', japanese: '～を求める、得ようとする', hint: 'seek help from the police（警察に助けを求める）', example: 'They are seeking new solutions.' },
-    { id: 'sys_55', english: 'search', phonetic: '/sɜːrtʃ/', japanese: '～を探す、探る', hint: 'search for the stolen car（盗難車を探す）', example: 'Police searched the entire house.' },
-    { id: 'sys_56', english: 'claim', phonetic: '/kleɪm/', japanese: '～と主張する、言い張る、要求する', hint: 'claim that he saw a UFO（UFOを見たと主張する）', example: 'He claimed ownership of the land.' },
-    { id: 'sys_57', english: 'draw', phonetic: '/drɔː/', japanese: '～を引っ張る、引き出す、描く', hint: 'draw a map（地図を描く）', example: 'She drew a line on the paper.' },
-    { id: 'sys_58', english: 'refuse', phonetic: '/rɪˈfjuːz/', japanese: '～を断る、辞退する', hint: 'refuse to give up hope（希望を捨てるのを拒む）', example: 'He refused to answer the question.' },
-    { id: 'sys_59', english: 'respond', phonetic: '/rɪˈspɑːnd/', japanese: '返答する、反応する', hint: 'respond to questions（質問に答える）', example: 'The patient responded to treatment.' },
-    { id: 'sys_60', english: 'mention', phonetic: '/ˈmenʃn/', japanese: '～について述べる、言及する', hint: 'Never mention it again.（二度と口にするな）', example: 'She mentioned your name in her mail.' },
-    { id: 'sys_61', english: 'judge', phonetic: '/dʒʌdʒ/', japanese: '～を判断する、裁判する', hint: 'judge a person by his looks（見た目で判断する）', example: 'You cannot judge a book by its cover.' },
-    { id: 'sys_62', english: 'approach', phonetic: '/əˈproʊtʃ/', japanese: '～に接近する、取り組む', hint: 'The plane is approaching Chicago.（接近している）', example: 'We need a new approach to this issue.' },
-    { id: 'sys_63', english: 'admit', phonetic: '/ədˈmɪt/', japanese: '～を認める、許可する', hint: 'I admit that I was wrong.（間違っていたと認める）', example: 'He was admitted to the university.' },
-    { id: 'sys_64', english: 'reflect', phonetic: '/rɪˈflekt/', japanese: '～を反映する、反射する、熟考する', hint: 'reflect the mood of the times（時代の気分を反映する）', example: 'She reflected on her past actions.' },
-    { id: 'sys_65', english: 'perform', phonetic: '/pərˈfɔːrm/', japanese: '～を行う、遂行する、演じる', hint: 'perform the job（仕事を遂行する）', example: 'The band performed on the stage.' },
-    { id: 'sys_66', english: 'bore', phonetic: '/bɔːr/', japanese: '～をうんざりさせる、退屈させる', hint: 'a very boring movie（すごく退屈な映画）', example: 'This lecture bores me to death.' },
-    { id: 'sys_67', english: 'survive', phonetic: '/sərˈvaɪv/', japanese: '生き残る、～より長生きする', hint: 'survive in the jungle（ジャングルで生き残る）', example: 'Only three people survived the crash.' },
-    { id: 'sys_68', english: 'represent', phonetic: '/ˌreprɪˈzent/', japanese: '～を表す、示す、代表する', hint: 'words represent ideas（言葉は考えを表す）', example: 'He represents our school.' },
-    { id: 'sys_69', english: 'argue', phonetic: '/ˈɑːrɡjuː/', japanese: '～と主張する、議論する、論争する', hint: 'argue that he is right（正しいと主張する）', example: 'They argued about the project details.' },
-    { id: 'sys_70', english: 'grant', phonetic: '/ɡrænt/', japanese: '～を認める、与える、かなえる', hint: 'take freedom for granted（自由を当然と考える）', example: 'The government granted him asylum.' },
-    { id: 'sys_71', english: 'indicate', phonetic: '/ˈɪndɪkeɪt/', japanese: '～を指し示す、表す', hint: 'indicate that he is right（正しいことを示す）', example: 'The report indicates a future trend.' },
-    { id: 'sys_72', english: 'belong', phonetic: '/bɪˈlɔːŋ/', japanese: '所属している、所有物である', hint: 'The book belongs to Howard.（ハワードのものだ）', example: 'She belongs to the local art club.' },
-    { id: 'sys_73', english: 'acquire', phonetic: '/əˈkwaɪər/', japanese: '～を習得する、獲得する', hint: 'acquire a language（言語を習得する）', example: 'He acquired a taste for green tea.' },
-    { id: 'sys_74', english: 'reply', phonetic: '/rɪˈplaɪ/', japanese: '返事をする、答える', hint: 'reply to his letter（彼の手紙に返事をする）', example: 'Please reply at your earliest convenience.' },
-    { id: 'sys_75', english: 'feed', phonetic: '/fiːd/', japanese: '～にエサをやる、養う、エサを食う', hint: 'feed a large family（大勢の家族を養う）', example: 'Don\'t forget to feed the fish.' },
-    { id: 'sys_76', english: 'escape', phonetic: '/ɪˈskeɪp/', japanese: '逃げる、まぬがれる、避ける', hint: 'escape from reality（現実から逃避する）', example: 'They escaped from the burning room.' },
-    { id: 'sys_77', english: 'replace', phonetic: '/rɪˈpleɪs/', japanese: '～に取って代わる、取り替える、戻す', hint: 'replace the old system（古い制度に代わる）', example: 'We need to replace the old printer.' },
-    { id: 'sys_78', english: 'reveal', phonetic: '/rɪˈviːl/', japanese: '～を明らかにする、示す', hint: 'reveal a surprising fact（驚くべき事実を示す）', example: 'The investigation revealed new truth.' },
-    { id: 'sys_79', english: 'surround', phonetic: '/səˈraʊnd/', japanese: '～を取り囲む', hint: 'Japan is surrounded by the sea.（海に囲まれている）', example: 'The house was surrounded by trees.' },
-    { id: 'sys_80', english: 'suit', phonetic: '/suːt/', japanese: '～に合う、適する、似合う', hint: 'The job suits you.（その仕事は君に合っている）', example: 'Dark colors suit you very well.' },
-    { id: 'sys_81', english: 'estimate', phonetic: '/ˈestɪmeɪt/', japanese: '～を推定する、評価する', hint: 'the estimated population of Japan（推定人口）', example: 'They estimated the cost at $500.' },
-    { id: 'sys_82', english: 'aim', phonetic: '/eɪm/', japanese: '～をねらう、目指す、向ける', hint: 'aim at the Asian market（アジア市場をねらう）', example: 'The project is aimed at teenagers.' },
-    { id: 'sys_83', english: 'earn', phonetic: '/ɜːrn/', japanese: '～を稼ぐ、もうける、得る', hint: 'earn money for the family（家族のためにお金を稼ぐ）', example: 'She earns a decent living.' },
-    { id: 'sys_84', english: 'decline', phonetic: '/dɪˈklaɪn/', japanese: '衰退する、低下する、辞退する', hint: 'My memory began to decline.（記憶力が低下し始めた）', example: 'She declined our invitation.' },
-    { id: 'sys_85', english: 'afford', phonetic: '/əˈfɔːrd/', japanese: '～をする余裕がある、与える', hint: 'can\'t afford to buy a Ford（買う余裕がない）', example: 'We can\'t afford a new car.' },
-    { id: 'sys_86', english: 'confuse', phonetic: '/kənˈfjuːz/', japanese: '～を当惑させる、混乱させる、混同する', hint: 'be confused by her anger（彼女の怒りに当惑する）', example: 'I often confuse her with her twin sister.' },
-    { id: 'sys_87', english: 'graduate', phonetic: '/ˈɡrædʒuət/', japanese: 'Aを卒業する', hint: 'graduate from high school（高校を卒業する）', example: 'He graduated from Oxford in 2024.' },
-    { id: 'sys_88', english: 'vary', phonetic: '/ˈveəri/', japanese: '変わる、さまざまである、変える', hint: 'vary from country to country（国によって変わる）', example: 'The rules vary depending on the area.' },
-    { id: 'sys_89', english: 'remove', phonetic: '/rɪˈmuːv/', japanese: '～を移す、取り去る、脱ぐ', hint: 'remove the cover（カバーを取り除く）', example: 'Please remove your shoes here.' },
-    { id: 'sys_90', english: 'insist', phonetic: '/ɪnˈsɪst/', japanese: '～を強く主張する、言い張る', hint: 'insist on going to France（行くと言い張る）', example: 'She insisted that she was innocent.' },
-    { id: 'sys_91', english: 'examine', phonetic: '/ɪɡˈzæmɪn/', japanese: '～を調査する、検査する、試験する', hint: 'examine every record（あらゆる記録を調べる）', example: 'The doctor examined the patient.' },
-    { id: 'sys_92', english: 'remind', phonetic: '/rɪˈmaɪnd/', japanese: 'AにBのことを思い出させる', hint: 'remind him of the promise（約束を思い出させる）', example: 'This song reminds me of my youth.' },
-    { id: 'sys_93', english: 'contribute', phonetic: '/kənˈtrɪbjuːt/', japanese: '貢献する、一因となる、寄付する', hint: 'contribute to world peace（世界平和に貢献する）', example: 'Smoking contributes to lung cancer.' },
-    { id: 'sys_94', english: 'warn', phonetic: '/wɔːrn/', japanese: '人、に警告する', hint: 'warn him of the danger（彼に危険を警告する）', example: 'The weather report warned of storm.' },
-    { id: 'sys_95', english: 'connect', phonetic: '/kəˈnekt/', japanese: '～をつなぐ、関係づける、つながる', hint: 'connect the PC to the Internet（ネットにつなぐ）', example: 'The two lines are connected here.' },
-    { id: 'sys_96', english: 'match', phonetic: '/mætʃ/', japanese: '～に匹敵する、～と調和する', hint: 'match him in power（力で彼に匹敵する）', example: 'The jacket matches your pants perfectly.' },
-    { id: 'sys_97', english: 'focus', phonetic: '/ˈfoʊkəs/', japanese: '焦点を合わせる、集中する', hint: 'focus on the problem（問題に焦点を合わせる）', example: 'We must focus on key issues.' },
-    { id: 'sys_98', english: 'reject', phonetic: '/rɪˈdʒekt/', japanese: '～を断る、拒絶する', hint: 'reject the proposal（提案を拒絶する）', example: 'The board rejected our budget request.' },
-    { id: 'sys_99', english: 'convince', phonetic: '/kənˈvɪns/', japanese: '人を納得させる、確信させる', hint: 'convince him that it is true（本当だと確信させる）', example: 'I am convinced that she is right.' },
-    { id: 'sys_100', english: 'associate', phonetic: '/əˈsoʊʃieɪt/', japanese: 'AをBに関連づける、連想する、付き合う', hint: 'Health is associated with happiness.（関連している）', example: 'Many associate winter with snow.' },
-    { id: 'sys_101', english: 'rush', phonetic: '/rʌʃ/', japanese: '急いで行く、急いでやる', hint: 'rush into the hospital（病院へ急いで行く）', example: 'Don\'t rush into making a decision.' },
-    { id: 'sys_102', english: 'stress', phonetic: '/stres/', japanese: '～を強調する', hint: 'stress the need for information（必要性を強調する）', example: 'The teacher stressed the rule.' },
-    { id: 'sys_103', english: 'attract', phonetic: '/əˈtrækt/', japanese: '～を引きつける、魅惑する', hint: 'attract his attention（彼の注意を引きつける）', example: 'The museum attracts many visitors.' },
-    { id: 'sys_104', english: 'rely', phonetic: '/rɪˈlaɪ/', japanese: 'Aに頼る、信頼する', hint: 'rely on their power（彼らの力に頼る）', example: 'You can always rely on my help.' },
-    { id: 'sys_105', english: 'regret', phonetic: '/rɪˈɡret/', japanese: '～を後悔する、残念に思う', hint: 'regret leaving home（家を出たのを後悔する）', example: 'I regret to say we cannot assist.' },
-    { id: 'sys_106', english: 'adopt', phonetic: '/əˈdɑːpt/', japanese: '～を採用する、養子にする', hint: 'adopt a new system（新しいシステムを採用する）', example: 'The couple adopted a baby girl.' },
-    { id: 'sys_107', english: 'shake', phonetic: '/ʃeɪk/', japanese: '～を振る、震える、動揺させる', hint: 'shake the bottle well（ビンをよく振る）', example: 'The earthquake shook the building.' },
-    { id: 'sys_108', english: 'hurt', phonetic: '/hɜːrt/', japanese: '～を傷つける、痛む', hint: 'hurt her feelings（彼女の気持ちを傷つける）', example: 'My back hurts when I walk.' },
-    { id: 'sys_109', english: 'operate', phonetic: '/ˈɑːpəreɪt/', japanese: '作動する、～を操作する、手術する', hint: 'operate a PC with a mouse（マウスで操作する）', example: 'The surgeon operated on him.' },
-    { id: 'sys_110', english: 'extend', phonetic: '/ɪkˈstend/', japanese: '～を広げる、延長する、伸びる', hint: 'Exercise extends life.（運動は寿命を延ばす）', example: 'We decided to extend our stay.' },
-    { id: 'sys_111', english: 'blame', phonetic: '/bleɪm/', japanese: '～を非難する、～のせいにする', hint: 'blame others for the failure（失敗を他人のせいにする）', example: 'He was to blame for the delay.' },
-    { id: 'sys_112', english: 'consist', phonetic: '/kənˈsɪst/', japanese: 'Aで構成されている、存在している', hint: 'The book consists of 6 lessons.（6課で構成）', example: 'Happiness consists in contentment.' },
-    { id: 'sys_113', english: 'persuade', phonetic: '/pərˈsweɪd/', japanese: '～を説得する、信じさせる', hint: 'persuade them to go back（説得して帰らせる）', example: 'She persuaded me to buy it.' },
-    { id: 'sys_114', english: 'admire', phonetic: '/ədˈmaɪər/', japanese: '～を賞賛する、尊敬する、感心する', hint: 'admire her work（彼女の仕事に感心する）', example: 'I highly admire your courage.' },
-    { id: 'sys_115', english: 'disappoint', phonetic: '/ˌdɪsəˈpɔɪnt/', japanese: '～を失望させる', hint: 'be disappointed with the results（結果に失望する）', example: 'The movie disappointed the fans.' },
-    { id: 'sys_116', english: 'expand', phonetic: '/ɪkˈspænd/', japanese: '～を拡大する、増大する、膨張する', hint: 'expand business overseas（海外へ事業を拡大）', example: 'Metal expands when heated.' },
-    { id: 'sys_117', english: 'preserve', phonetic: '/prɪˈzɜːrv/', japanese: '～を保護する、保存する、維持する', hint: 'preserve forests（森林を保護する）', example: 'We must preserve historic sites.' },
-    { id: 'sys_118', english: 'struggle', phonetic: '/ˈstrʌɡl/', japanese: '苦闘する、努力する、もがく', hint: 'struggle to get free（自由になろうともがく）', example: 'She struggled to pass the test.' },
-    { id: 'sys_119', english: 'arrange', phonetic: '/əˈreɪndʒ/', japanese: '手はずを整える、手配する、配列する', hint: 'arrange the meeting（会合の手はずを整える）', example: 'She arranged flowers in a vase.' },
-    { id: 'sys_120', english: 'disturb', phonetic: '/dɪˈstɜːrb/', japanese: '～をさまたげる、不安にする、かき乱す', hint: 'disturb his sleep（彼の睡眠を妨げる）', example: 'Do not disturb me while I study.' },
-    { id: 'sys_121', english: 'employ', phonetic: '/ɪmˈplɔɪ/', japanese: '～を雇う、用いる', hint: 'employ foreign workers（外国人労働者を雇う）', example: 'The firm employs over 100 people.' },
-    { id: 'sys_122', english: 'engage', phonetic: '/ɪnˈɡeɪdʒ/', japanese: 'Aに従事する、参加する、従事させる', hint: 'engage in volunteer activities（ボランティアに参加）', example: 'He is engaged in import business.' },
-    { id: 'sys_123', english: 'abandon', phonetic: '/əˈbændən/', japanese: '～を捨てる、放棄する', hint: 'an abandoned pet（捨てられたペット）', example: 'They abandoned the sinking ship.' },
-    { id: 'sys_124', english: 'display', phonetic: '/dɪˈspleɪ/', japanese: '～を展示する、表す、表示する', hint: 'display prices（価格を示す）', example: 'The screen displayed an error message.' },
-    { id: 'sys_125', english: 'encounter', phonetic: '/ɪnˈkaʊntər/', japanese: '～に偶然出会う、遭う、ぶつかる', hint: 'encounter many difficulties（数々の困難に出会う）', example: 'I encountered an old friend yesterday.' },
-    { id: 'sys_126', english: 'amuse', phonetic: '/əˈmjuːz/', japanese: '～を楽しませる、笑わせる', hint: 'amuse students with jokes（冗談で笑わせる）', example: 'The clown amused the children.' },
-    { id: 'sys_127', english: 'bother', phonetic: '/ˈbɑːðər/', japanese: '～に面倒をかける、困らせる、気にする', hint: 'Sorry to bother you, but...（おじゃましますが…）', example: 'Don\'t bother to call back.' },
-    { id: 'sys_128', english: 'concentrate', phonetic: '/ˈkɑːnsntreɪt/', japanese: '集中する、集中させる', hint: 'concentrate on what he says（彼の話に集中する）', example: 'I cannot concentrate with this noise.' },
-    { id: 'sys_129', english: 'adapt', phonetic: '/əˈdæpt/', japanese: '～を適応させる、慣れさせる、改変する', hint: 'adapt to a new culture（新しい文化に適応する）', example: 'She adapted easily to city life.' },
-    { id: 'sys_130', english: 'puzzle', phonetic: '/ˈpʌzl/', japanese: '～を当惑させる、頭を悩ませる', hint: 'be puzzled by the problem（問題に頭を悩ませる）', example: 'Her sudden departure puzzled everyone.' },
-    { id: 'sys_131', english: 'appeal', phonetic: '/əˈpiːl/', japanese: 'Aに訴えかける、引きつける', hint: 'appeal to his feelings（彼の感情に訴えかける）', example: 'This movie appeals to all ages.' },
-    { id: 'sys_132', english: 'combine', phonetic: '/kəmˈbaɪn/', japanese: '～を結合させる、組み合わせる', hint: 'combine song and dance（歌と踊りを組み合わせる）', example: 'They combined their forces.' },
-    { id: 'sys_133', english: 'delay', phonetic: '/dɪˈleɪ/', japanese: '～を遅らせる、延期する', hint: 'delay his arrival（彼の到着を遅らせる）', example: 'The flight was delayed by snow.' },
-    { id: 'sys_134', english: 'repair', phonetic: '/rɪˈpeər/', japanese: '～を修理する、修復する', hint: 'repair the car（車を修理する）', example: 'The road is currently under repair.' },
-    { id: 'sys_135', english: 'fascinate', phonetic: '/ˈfæsɪneɪt/', japanese: '人を夢中にさせる、興味をかきたてる', hint: 'a fascinating story（夢中にさせる物語）', example: 'Ancient history fascinates me.' },
-    { id: 'sys_136', english: 'pardon', phonetic: '/ˈpɑːrdn/', japanese: '～を許す', hint: 'Pardon me.（ごめんなさい、失礼ですが）', example: 'Pardon my interruption.' },
-    { id: 'sys_137', english: 'import', phonetic: '/ˈɪmpɔːrt/', japanese: '～を輸入する', hint: 'import food from abroad（海外から食料を輸入する）', example: 'Japan imports much of its fuel.' },
-    { id: 'sys_138', english: 'remark', phonetic: '/rɪˈmɑːrk/', japanese: '～と述べる、言う', hint: 'remark that he is kind（親切だと述べる）', example: 'He remarked that the food was cold.' },
-    { id: 'sys_139', english: 'reserve', phonetic: '/rɪˈzɜːrv/', japanese: '～を予約する、とっておく', hint: 'reserve a room at a hotel（ホテルの部屋を予約）', example: 'Seats are reserved for guests.' },
-    { id: 'sys_140', english: 'amaze', phonetic: '/əˈmeɪz/', japanese: '～を驚嘆させる、驚かせる', hint: 'at an amazing speed（驚異的な速さで）', example: 'His recovery amazed the doctors.' },
-    { id: 'sys_141', english: 'frighten', phonetic: '/ˈfraɪtn/', japanese: '人、をおびえさせる、ぞっとさせる', hint: 'a frightening experience（ぞっとするような経験）', example: 'The loud noise frightened the baby.' },
-    { id: 'sys_142', english: 'release', phonetic: '/rɪˈliːs/', japanese: '～を解放する、発表する、放出する', hint: 'release him from work（仕事から解放する）', example: 'The new movie was released today.' },
-    { id: 'sys_143', english: 'rent', phonetic: '/rent/', japanese: '～を賃借りする、賃貸しする', hint: 'rent an apartment（アパートを借りる）', example: 'She rents out rooms to students.' },
-    { id: 'sys_144', english: 'recover', phonetic: '/rɪˈkʌvər/', japanese: '回復する、取り戻す', hint: 'recover from illness（病気から回復する）', example: 'He is recovering from a cold.' },
-    { id: 'sys_145', english: 'suspect', phonetic: '/səˈspekt/', japanese: '～ではないかと思う、疑う', hint: 'I suspect he is a spy.（彼がスパイだと思う）', example: 'The police suspect him of theft.' },
-    { id: 'sys_146', english: 'deliver', phonetic: '/dɪˈlɪvər/', japanese: '～を配達する、演説をする', hint: 'deliver a message to a friend（伝言を渡す）', example: 'The courier delivered the package.' },
-    { id: 'sys_147', english: 'identify', phonetic: '/aɪˈdentɪfaɪ/', japanese: '正体をつきとめる、共感する、同一視する', hint: 'identify people by their eyes（目で本人確認をする）', example: 'She identified the suspect.' },
-    { id: 'sys_148', english: 'locate', phonetic: '/ˈloʊkeɪt/', japanese: '位置する、～の場所を見つける', hint: 'The office is located in the area.（そこにある）', example: 'We located the leak in the pipe.' },
-    { id: 'sys_149', english: 'manufacture', phonetic: '/ˌmænjuˈfæktʃər/', japanese: '～を製造する、生産する', hint: 'a car manufacturing company（自動車製造企業）', example: 'They manufacture electronic parts.' },
-    { id: 'sys_150', english: 'occupy', phonetic: '/ˈɑːkjupaɪ/', japanese: '場所・地位などを占める', hint: 'occupy a high position（高い地位を占める）', example: 'The library occupies the top floor.' },
-    { id: 'sys_151', english: 'own', phonetic: '/oʊn/', japanese: '～を所有している、持っている', hint: 'own a house（家を所有している）', example: 'I own three bicycles.' },
-    { id: 'sys_152', english: 'expose', phonetic: '/ɪkˈspoʊz/', japanese: 'AをBにさらす、あばく', hint: 'be exposed to danger（危険にさらされる）', example: 'Don\'t expose the film to light.' },
-    { id: 'sys_153', english: 'translate', phonetic: '/trænzˈleɪt/', japanese: '～を翻訳する、変える', hint: 'translate a novel into English（英語に翻訳）', example: 'She translates documents for a living.' },
-    { id: 'sys_154', english: 'cure', phonetic: '/kjʊər/', japanese: '～を治療する、悪い習慣を直す', hint: 'cure him of his illness（彼の病気を治す）', example: 'This medicine will cure your cold.' },
-    { id: 'sys_155', english: 'perceive', phonetic: '/pərˈsiːv/', japanese: '～を知覚する、気づく、思う', hint: 'perceive danger（危険に気づく）', example: 'I perceived a change in her mood.' },
-    { id: 'sys_156', english: 'adjust', phonetic: '/əˈdʒʌst/', japanese: '慣れる、適合させる、調節する', hint: 'adjust to a new school（新しい学校に慣れる）', example: 'He adjusted the volume of the TV.' },
-    { id: 'sys_157', english: 'alarm', phonetic: '/əˈlɑːrm/', japanese: '～をぎょっとさせる、おびえさせる', hint: 'be alarmed by the noise（その音にぎょっとする）', example: 'She was alarmed by the news.' },
-    { id: 'sys_158', english: 'assist', phonetic: '/əˈsɪst/', japanese: '～を助ける、手伝う', hint: 'assist him in his work（彼の仕事を手伝う）', example: 'An assistant will guide you.' },
-    { id: 'sys_159', english: 'freeze', phonetic: '/friːz/', japanese: '凍りつく、動かなくなる', hint: 'a frozen stream（凍った小川）', example: 'Water freezes at zero degrees.' },
-    { id: 'sys_160', english: 'spoil', phonetic: '/spɔɪl/', japanese: '台無しにする、甘やかしてだめにする', hint: 'spoil the party（パーティを台無しにする）', example: 'The rain spoiled our picnic.' },
-    { id: 'sys_161', english: 'shift', phonetic: '/ʃɪft/', japanese: '～を変える、移す', hint: 'shift gears（ギアを切り替える）', example: 'They shifted the meeting time.' },
-    { id: 'sys_162', english: 'embarrass', phonetic: '/ɪmˈbærəs/', japanese: '～を困惑させる、恥ずかしい思いをさせる', hint: 'be embarrassed by the mistake（間違えて恥ずかしい）', example: 'Her question embarrassed him.' },
-    { id: 'sys_163', english: 'approve', phonetic: '/əˈpruːv/', japanese: '賛成する、承認する', hint: 'approve of their marriage（二人の結婚に賛成）', example: 'The board approved the plan.' },
-    { id: 'sys_164', english: 'weigh', phonetic: '/weɪ/', japanese: '～の重さがある、比較検討する', hint: 'weigh 65 kilograms（65キロの重さがある）', example: 'We must weigh the pros and cons.' },
-    { id: 'sys_165', english: 'stretch', phonetic: '/stretʃ/', japanese: '～を広げる、伸ばす、広がる', hint: 'stretch my legs（足を伸ばす）', example: 'He stretched his arms.' },
-    { id: 'sys_166', english: 'participate', phonetic: '/pɑːrˈtɪsɪpeɪt/', japanese: 'Aに参加する', hint: 'participate in the meeting（会合に参加する）', example: 'We hope you will participate.' },
-    { id: 'sys_167', english: 'exhibit', phonetic: '/ɪɡˈzɪbɪt/', japanese: '～を展示する、示す', hint: 'exhibit Picasso\'s works（作品を展示する）', example: 'They exhibited their new designs.' },
-    { id: 'sys_168', english: 'owe', phonetic: '/oʊ/', japanese: 'AのことはBのおかげだ、借りている', hint: 'I owe my success to you.（成功はあなたのおかげ）', example: 'I owe him fifty dollars.' },
-    { id: 'sys_169', english: 'celebrate', phonetic: '/ˈselɪbreɪt/', japanese: '祝う、儀式を行う、賞賛する', hint: 'celebrate his birthday（誕生日を祝う）', example: 'We celebrated our victory.' },
-    { id: 'sys_170', english: 'decorate', phonetic: '/ˈdekəreɪt/', japanese: '～を装飾する、飾りをつける', hint: 'trees decorated with lights（電飾で飾られた木々）', example: 'We decorated the room.' },
-    { id: 'sys_171', english: 'forgive', phonetic: '/fərˈɡɪv/', japanese: '過ち・人を許す', hint: 'forgive him for being late（遅刻を許す）', example: 'Please forgive me for my mistake.' },
-    { id: 'sys_172', english: 'seat', phonetic: '/siːt/', japanese: '座っている、～人を収容する', hint: 'be seated on the bench（ベンチに座っている）', example: 'The hall seats 500 people.' },
-    { id: 'sys_173', english: 'injure', phonetic: '/ˈɪndʒər/', japanese: '～を傷つける、けがをさせる', hint: 'be injured in the accident（事故で負傷する）', example: 'He injured his knee.' },
-    { id: 'sys_174', english: 'sew', phonetic: '/soʊ/', japanese: '～を縫う', hint: 'sew a wedding dress（ドレスを縫う）', example: 'She sews her own clothes.' }
+    { 
+        id: 'sys_1', 
+        english: 'follow', 
+        phonetic: '/ˈfɑːloʊ/', 
+        japanese: '～の後に続く、従う', 
+        hint: 'follow her advice（助言に従う）', 
+        example: 'Follow the instructions carefully.',
+        derivatives: [
+            { english: 'following', partOfSpeech: '形', japanese: '次の、以下のような' }
+        ]
+    },
+    { 
+        id: 'sys_2', 
+        english: 'consider', 
+        phonetic: '/kənˈsɪdər/', 
+        japanese: '～を考慮する、考える', 
+        hint: 'consider the problem seriously（問題を真剣に考える）', 
+        example: 'We should consider all options.',
+        derivatives: [
+            { english: 'consideration', partOfSpeech: '名', japanese: '考慮、思いやり' },
+            { english: 'considerate', partOfSpeech: '形', japanese: '思いやりのある' }
+        ]
+    },
+    { 
+        id: 'sys_3', 
+        english: 'increase', 
+        phonetic: '/ɪnˈkriːs/', 
+        japanese: '増える、～を増やす', 
+        hint: 'increase by 20%（20%増加する）', 
+        example: 'The population continues to increase.',
+        derivatives: [
+            { english: 'increasingly', partOfSpeech: '副', japanese: 'ますます' }
+        ]
+    },
+    { 
+        id: 'sys_4', 
+        english: 'expect', 
+        phonetic: '/ɪkˈspekt/', 
+        japanese: '～を予期する、期待する', 
+        hint: 'expect you to arrive soon（到着を予期する）', 
+        example: 'I expect that they will arrive shortly.',
+        derivatives: [
+            { english: 'expectation', partOfSpeech: '名', japanese: '予期、期待' }
+        ]
+    },
+    { 
+        id: 'sys_5', 
+        english: 'decide', 
+        phonetic: '/dɪˈsaɪd/', 
+        japanese: '～することを決定する、判断する', 
+        hint: 'decide to tell the truth（真実を語る決意をする）', 
+        example: 'She decided to study medicine.',
+        derivatives: [
+            { english: 'decision', partOfSpeech: '名', japanese: '決意、決定' },
+            { english: 'decisive', partOfSpeech: '形', japanese: '決定的な、断固とした' }
+        ]
+    },
+    { 
+        id: 'sys_6', 
+        english: 'develop', 
+        phonetic: '/dɪˈveləp/', 
+        japanese: '～を発達させる、開発する', 
+        hint: 'develop a unique ability（特殊な能力を発達させる）', 
+        example: 'They are trying to develop new materials.',
+        derivatives: [
+            { english: 'development', partOfSpeech: '名', japanese: '発達、成長、開発' }
+        ]
+    },
+    { 
+        id: 'sys_7', 
+        english: 'provide', 
+        phonetic: '/prəˈvaɪd/', 
+        japanese: '～を供給する、与える', 
+        hint: 'provide him with information（彼に情報を与える）', 
+        example: 'The course provides basic skills.',
+        derivatives: [
+            { english: 'provision', partOfSpeech: '名', japanese: '供給、用意' }
+        ]
+    },
+    { 
+        id: 'sys_8', 
+        english: 'continue', 
+        phonetic: '/kənˈtɪnjuː/', 
+        japanese: '続く、～を続ける', 
+        hint: 'continue to grow fast（急速に成長し続ける）', 
+        example: 'He continued working despite the noise.',
+        derivatives: [
+            { english: 'continuous', partOfSpeech: '形', japanese: '絶え間ない、休みない' }
+        ]
+    },
+    { 
+        id: 'sys_9', 
+        english: 'include', 
+        phonetic: '/ɪnˈkluːd/', 
+        japanese: '～を含む、含める', 
+        hint: 'includes his name（彼の名前を含む）', 
+        example: 'The bill includes service charges.',
+        derivatives: [
+            { english: 'including', partOfSpeech: '前', japanese: '～を含めて' }
+        ]
+    },
+    { 
+        id: 'sys_10', 
+        english: 'remain', 
+        phonetic: '/rɪˈmeɪn/', 
+        japanese: '～のままでいる、残る', 
+        hint: 'remain silent（黙ったままでいる）', 
+        example: 'Many questions still remain unanswered.',
+        derivatives: [
+            { english: 'remains', partOfSpeech: '名', japanese: '遺物、遺跡、残り物' }
+        ]
+    },
+    { 
+        id: 'sys_11', 
+        english: 'reach', 
+        phonetic: '/riːtʃ/', 
+        japanese: '～に着く、達する', 
+        hint: 'reach the mountain top（山頂に到達する）', 
+        example: 'We reached our destination at noon.'
+    },
+    { 
+        id: 'sys_12', 
+        english: 'allow', 
+        phonetic: '/əˈlaʊ/', 
+        japanese: '～を許可する、許す、可能にする', 
+        hint: 'allow him to go out（外出を許可する）', 
+        example: 'Computers allow us to work faster.',
+        derivatives: [
+            { english: 'allowance', partOfSpeech: '名', japanese: '手当、小遣い' }
+        ]
+    },
+    { 
+        id: 'sys_13', 
+        english: 'force', 
+        phonetic: '/fɔːrs/', 
+        japanese: '～を強制する', 
+        hint: 'be forced to work（働くよう強制される）', 
+        example: 'He was forced to resign.'
+    },
+    { 
+        id: 'sys_14', 
+        english: 'offer', 
+        phonetic: '/ˈɔːfər/', 
+        japanese: '～を申し出る、与える', 
+        hint: 'offer help to the poor（援助を申し出る）', 
+        example: 'They offered us a warm welcome.'
+    },
+    { 
+        id: 'sys_15', 
+        english: 'realize', 
+        phonetic: '/ˈriːəlaɪz/', 
+        japanese: '～を悟る、気づく、実現する', 
+        hint: 'realize the error（まちがいを悟る）', 
+        example: 'I finally realized my dream.',
+        derivatives: [
+            { english: 'realization', partOfSpeech: '名', japanese: '認識、実現' }
+        ]
+    }
 ];
 
-// 初期設定フォルダ
+// 初期フォルダ設定
 const DEFAULT_FOLDERS = [
     {
         id: 'folder_preset_ch1',
         name: 'システム英単語 Ch.1 🔒',
         isPreset: true,
-        wordIds: [] // 起動時（app.js）に全174語のIDを自動的にロードします
+        wordIds: [] // app.js起動時に全IDを紐付け
     }
-];
-
-// ペット進化テーブル
-const PET_STAGES = [
-    { minLevel: 1, maxLevel: 2, avatar: '🥚', name: 'タマゴ', messages: ["トントン...中から音がするピ", "動かすと少し揺れるピ！"] },
-    { minLevel: 3, maxLevel: 5, avatar: '🐣', name: 'ひよこ（殻つき）', messages: ["パカッ！生まれたピ！", "もっと単語を食べたいピ！", "おやつはいつも大歓迎だピ！"] },
-    { minLevel: 6, maxLevel: 9, avatar: '🐥', name: 'ひよこ', messages: ["羽がフサフサしてきたピ！", "頑張る主人が大好きだピ！", "たくさん正解しておやつをくれピ！"] },
-    { minLevel: 10, maxLevel: 999, avatar: '🐉', name: 'ミニドラゴン', messages: ["ウオオオン！強くなったピ！", "完全にマスターしたピ！", "もう教えることは何もないピ！"] }
 ];
