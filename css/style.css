@@ -1,20 +1,18 @@
-/* 画面を引っ張ってリフレッシュするのを防ぐ(モバイルWeb必須) */
-body {
-    overscroll-behavior-y: contain;
+/* ================= スマホ連続タップバグ（ダブルタップズーム）防止 ================= */
+button,
+a,
+input,
+textarea,
+select,
+[role="button"],
+#word-question-card {
+    touch-action: manipulation; /* ダブルタップズーム禁止 */
+    -webkit-tap-highlight-color: transparent; /* タップ時の一瞬の青ハイライトを排除 */
 }
 
-/* 3Dカードフリップ */
-.perspective {
-    perspective: 1000px;
-}
-.transform-style-3d {
-    transform-style: preserve-3d;
-}
-.backface-hidden {
-    backface-visibility: hidden;
-}
-.rotate-y-180 {
-    transform: rotateY(180deg);
+/* 画面引っ張りによる強制リフレッシュの防止 */
+body {
+    overscroll-behavior-y: contain;
 }
 
 /* スクロールバーの非表示・スタイライズ */
@@ -29,34 +27,34 @@ body {
     border-radius: 9999px;
 }
 
-/* ペットのアイドルアニメーション（ピコピコ感のある上下の動き） */
+/* ペットのアイドルアニメーション */
 @keyframes idle {
     0%, 100% {
         transform: translateY(0) scaleY(1);
     }
     50% {
-        transform: translateY(-8px) scaleY(0.95);
+        transform: translateY(-6px) scaleY(0.96);
     }
 }
 .animate-idle {
     animation: idle 2s infinite ease-in-out;
 }
 
-/* エサを与えた時の喜び跳ねアニメーション */
+/* 喜びアニメーション */
 @keyframes happy {
     0%, 100% {
         transform: translateY(0) scale(1);
     }
     30% {
-        transform: translateY(-20px) scale(1.1);
+        transform: translateY(-16px) scale(1.08);
     }
     50% {
-        transform: translateY(0) scale(0.9);
+        transform: translateY(0) scale(0.92);
     }
     80% {
-        transform: translateY(-8px) scale(1.05);
+        transform: translateY(-6px) scale(1.04);
     }
 }
 .animate-happy {
-    animation: happy 0.8s ease-in-out;
+    animation: happy 0.7s ease-in-out;
 }
