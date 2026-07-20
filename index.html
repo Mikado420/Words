@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GamiWord Pro AI-Edition</title>
+    <title>GamiWord Pro</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
+    
+    <!-- スクリプト順序をdeferで完全保証 -->
+    <script src="js/chapter1.js" defer></script>
+    <script src="js/pet.js" defer></script>
+    <script src="js/app.js" defer></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden select-none">
 
@@ -15,11 +20,11 @@
         <div class="text-center animate-pulse">
             <div class="text-6xl mb-4">🐉</div>
             <h1 class="text-3xl font-extrabold tracking-widest text-emerald-400">GamiWord Pro</h1>
-            <p class="text-xs text-slate-500 mt-2">システム英単語 Ch.1 ＆ 派生語対応</p>
+            <p class="text-xs text-slate-500 mt-2">システム英単語 Ch.1 全174語搭載</p>
         </div>
     </div>
 
-    <!-- ================= メインコンテナ ================= -->
+    <!-- ================= メインアプリケーションコンテナ (100dvh固定) ================= -->
     <div id="main-app" class="hidden h-[100dvh] w-full max-w-md mx-auto flex flex-col justify-between overflow-hidden">
         
         <!-- ヘッダー (8dvh) -->
@@ -45,20 +50,20 @@
             <!-- 2-A. 学習・管理タブ -->
             <div id="view-learn" class="absolute inset-0 flex flex-col p-4 transition-transform duration-300">
                 
-                <!-- [A-1] フォルダ選択ビュー -->
+                <!-- [A-1] フォルダ選択サブビュー -->
                 <div id="subview-folder-list" class="flex flex-col h-full justify-between">
                     <div class="flex-1 overflow-y-auto space-y-3 pr-1">
                         <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xs font-bold text-slate-400">フォルダを選択</h3>
+                            <h3 class="text-xs font-bold text-slate-400">学習するフォルダを選択</h3>
                             <button id="btn-open-create-folder" class="text-xs text-emerald-400 font-bold active:scale-95">＋ 新規作成</button>
                         </div>
                         <div id="folder-container" class="space-y-2">
-                            <!-- 動的生成 -->
+                            <!-- JSで動的にフォルダを生成 -->
                         </div>
                     </div>
                 </div>
 
-                <!-- [A-2] フォルダ詳細ビュー（基礎・応用設定を追加） -->
+                <!-- [A-2] フォルダ内単語一覧＆編集サブビュー -->
                 <div id="subview-folder-detail" class="hidden flex flex-col h-full justify-between">
                     <div class="flex items-center justify-between mb-2">
                         <button id="btn-back-to-folders" class="text-xs text-slate-400">◀ 戻る</button>
@@ -69,7 +74,7 @@
                         <!-- 単語一覧 -->
                     </div>
                     
-                    <!-- 基礎・応用切り替えUI -->
+                    <!-- 基礎・応用設定UI -->
                     <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl mb-3 space-y-2">
                         <div class="text-xs text-slate-400 font-bold">演習オプション設定</div>
                         <div class="flex justify-around items-center py-1 text-xs">
@@ -89,7 +94,7 @@
                     </button>
                 </div>
 
-                <!-- [A-3] 4択クイズ演習ビュー -->
+                <!-- [A-3] 4択クイズ演習メインビュー -->
                 <div id="subview-card-practice" class="hidden flex flex-col h-full justify-between">
                     <div class="h-6 flex justify-between items-center px-1">
                         <button id="btn-exit-practice" class="text-xs text-slate-500">◀ 中断</button>
@@ -99,12 +104,12 @@
                         <span class="text-xs text-slate-500">残り: <span id="remaining-count">0</span>問</span>
                     </div>
 
-                    <!-- 問題カード -->
+                    <!-- 問題カード表示 (タップでヒント表示) -->
                     <div id="word-question-card" class="w-full h-[22dvh] my-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between p-4 relative shadow-md cursor-pointer">
                         <div class="w-full flex justify-between items-center text-[10px] text-slate-500">
-                            <span id="card-hint-notice">タップでヒント表示</span>
+                            <span id="card-hint-notice">タップでヒントを表示</span>
                             <div class="flex space-x-2">
-                                <span id="tag-derivative" class="hidden bg-purple-900/60 text-purple-200 border border-purple-700 px-1.5 rounded">応用（派生語）</span>
+                                <span id="tag-derivative" class="hidden bg-purple-900/60 text-purple-200 border border-purple-700 px-1.5 rounded text-[9px]">応用（派生語）</span>
                                 <button id="btn-speak" class="p-1 text-slate-400 hover:text-slate-200">🔊 音声</button>
                             </div>
                         </div>
@@ -117,7 +122,7 @@
                         </div>
                     </div>
 
-                    <!-- 4択選択肢 -->
+                    <!-- 4択選択肢ボタンエリア (親指の届く位置) -->
                     <div id="choices-container" class="grid grid-rows-4 gap-2.5 h-[40dvh] items-center py-2">
                         <!-- 動的生成 -->
                     </div>
@@ -125,17 +130,17 @@
 
             </div>
 
-            <!-- 2-B. データ図鑑タブ -->
+            <!-- 2-B. データ図鑑ビュー -->
             <div id="view-dict" class="absolute inset-0 hidden flex flex-col p-4 transition-transform duration-300">
-                <p class="text-xs text-slate-500 mb-2">全単語の記憶強度・SRSレベル管理</p>
+                <p class="text-xs text-slate-500 mb-2">全単語の記憶強度とステータス</p>
                 <div id="dict-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
-                    <!-- 動的生成 -->
+                    <!-- JSで動的に単語を生成 -->
                 </div>
             </div>
 
-            <!-- 2-C. ペット育成タブ -->
+            <!-- 2-C. ペット育成ビュー -->
             <div id="view-pet" class="absolute inset-0 hidden flex flex-col justify-between p-4 transition-transform duration-300">
-                <!-- ステータス（pet.jsに切り出し・描画連動） -->
+                <!-- ステータス -->
                 <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
                     <div class="flex justify-between items-center">
                         <span id="pet-level-name" class="font-extrabold text-sm text-slate-200">Lv.1 タマゴ</span>
@@ -197,7 +202,7 @@
 
     <!-- ================= モーダル群 ================= -->
     
-    <!-- 設定・APIキー設定モーダル -->
+    <!-- 設定・APIキー設定 -->
     <div id="modal-settings" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5">
             <h4 class="text-base font-bold text-white mb-2">アプリ設定</h4>
@@ -207,7 +212,7 @@
                     <input type="password" id="input-api-key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="sk-...">
                 </div>
                 <p class="text-[9px] text-slate-500 leading-normal">
-                    ※キーはローカルブラウザ（LocalStorage）にのみ安全に保存されます。キーがない場合はローカルの簡易ひっかけロジックが働きます。
+                    ※キーはブラウザに安全に保存されます。キーがない場合はローカルの疑似AIが代わりに動きます。
                 </p>
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -217,19 +222,19 @@
         </div>
     </div>
 
-    <!-- 1. フォルダ作成モーダル -->
+    <!-- 1. フォルダ作成 -->
     <div id="modal-create-folder" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5">
             <h4 class="text-base font-bold text-white mb-3">新規フォルダ作成</h4>
-            <input type="text" id="input-folder-name" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 mb-4" placeholder="フォルダ名" maxlength="15">
+            <input type="text" id="input-folder-name" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 mb-4" placeholder="フォルダ名を入力" maxlength="15">
             <div class="grid grid-cols-2 gap-3">
-                <button id="btn-cancel-folder" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-2 text-xs">キャンセル</button>
-                <button id="btn-save-folder" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg py-2 text-xs">作成</button>
+                <button id="btn-cancel-folder" class="bg-slate-800 text-slate-300 rounded-lg py-2 text-xs">キャンセル</button>
+                <button id="btn-save-folder" class="bg-emerald-600 text-slate-950 font-bold rounded-lg py-2 text-xs">作成</button>
             </div>
         </div>
     </div>
 
-    <!-- 2. 単語追加モーダル -->
+    <!-- 2. 単語追加 -->
     <div id="modal-add-word" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5">
             <h4 class="text-base font-bold text-white mb-3">新規単語追加</h4>
@@ -242,7 +247,7 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <button id="btn-cancel-add-word" class="bg-slate-800 text-slate-300 rounded-lg py-2 text-xs">キャンセル</button>
-                <button id="btn-save-add-word" class="bg-emerald-600 text-slate-950 font-bold rounded-lg py-2 text-xs">追加</button>
+                <button id="btn-save-add-word" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg py-2 text-xs">追加</button>
             </div>
         </div>
     </div>
@@ -264,9 +269,5 @@
         </div>
     </div>
 
-    <!-- JSファイル分割ロード -->
-    <script src="js/chapter1.js" defer></script>
-    <script src="js/pet.js" defer></script>
-    <script src="js/app.js" defer></script>
 </body>
 </html>
