@@ -1,5 +1,5 @@
 /**
- * GamiWord Pro - 統合管理・非同期API連携・画面遷移制御
+ * GamiWord Pro - 統合管理・セキュアAPI遷移制御エンジン
  */
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -11,18 +11,14 @@ window.addEventListener('DOMContentLoaded', () => {
         level: 1,
         foods: 0,
         satiety: 100,
-        
         folders: [],
         words: [], 
-        customWords: [],
-        
         activeFolderId: null,
         practiceWords: [], 
         currentCardIndex: 0,
         isHintShown: false
     };
 
-    // DOM要素の防衛的定義 (ID不整合時のクラッシュを防止)
     const elements = {
         viewTitle: document.getElementById('view-title'),
         mainApp: document.getElementById('main-app'),
@@ -89,6 +85,11 @@ window.addEventListener('DOMContentLoaded', () => {
         btnCancelSettings: document.getElementById('btn-cancel-settings'),
         btnSaveSettings: document.getElementById('btn-save-settings'),
 
+        // セキュア初期モーダル
+        modalInitialApi: document.getElementById('modal-initial-api'),
+        inputInitialKey: document.getElementById('input-initial-key'),
+        btnSaveInitialKey: document.getElementById('btn-save-initial-key'),
+
         dictModal: document.getElementById('dict-modal'),
         btnCloseModal: document.getElementById('btn-close-modal'),
         modalEnglish: document.getElementById('modal-english'),
@@ -100,16 +101,20 @@ window.addEventListener('DOMContentLoaded', () => {
         modalStrength: document.getElementById('modal-strength')
     };
 
-    // ================= 1. AI API連携 ＆ ひっかけ選択肢生成 =================
+    // ================= 1. AI API連携ロジック ＆ ひっかけ選択肢生成 =================
     
+    function getApiKey() {
+        return localStorage.getItem('gamiword_api_key');
+    }
+
     function updateAIStatusUI() {
-        const key = localStorage.getItem('gamiword_api_key');
+        const key = getApiKey();
         if (elements.aiStatus) {
             if (key) {
                 elements.aiStatus.textContent = "AI: オンライン";
                 elements.aiStatus.className = "text-[8px] text-emerald-400 font-bold";
             } else {
-                elements.aiStatus.textContent = "AI: ローカル";
+                elements.aiStatus.textContent = "AI: 未設定";
                 elements.aiStatus.className = "text-[8px] text-slate-500";
             }
         }
@@ -143,14 +148,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchAIOptionChoices(word) {
-        const apiKey = localStorage.getItem('gamiword_api_key');
+        const apiKey = getApiKey();
         if (!apiKey) return generateChoicesLocal(word);
 
         const prompt = `
 JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択クイズの選択肢を出力してください。
 正解(isCorrect: true)は、必ず"${word.japanese}"。
 不正解(isCorrect: false)は、スペル酷似、意味類似、他動詞の3パターンを構築してください。
-装飾無しのプレーンJSONのみを返却してください。
+装飾無しのプレーンJSONのみを返却。
 {
   "choices": [
     {"text": "${word.japanese}", "isCorrect": true},
@@ -189,27 +194,25 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
 
         for (const word of ungenerated) {
             word.choices = await fetchAIOptionChoices(word);
-            saveState(); // 1単語生成ごとにバックアップ
+            saveState(); 
         }
     }
 
-    // ================= 2. アプリケーションのライフサイクル ＆ 確実な画面遷移 =================
+    // ================= 2. 初期化 ＆ セキュリティ遷移シーケンス =================
     function init() {
-        const saved = localStorage.getItem('gamiword_pro_core_v2');
+        const saved = localStorage.getItem('gamiword_secure_save');
         if (saved) {
             try {
                 state = { ...state, ...JSON.parse(saved) };
             } catch (e) {
-                console.error("データの破損を検知。クリアして開始します。");
+                console.error("データの破損を検知");
             }
         }
 
-        // 統合単語DBがなければchapter1.jsのプリセットデータをディープコピー
         if (!state.words || state.words.length === 0) {
             state.words = JSON.parse(JSON.stringify(SYSTEM_WORDS_PRESET));
         }
 
-        // フォルダの初期化
         if (!state.folders || state.folders.length === 0) {
             state.folders = JSON.parse(JSON.stringify(DEFAULT_FOLDERS));
         }
@@ -218,7 +221,6 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             presetFolder.wordIds = state.words.map(w => w.id);
         }
 
-        // ペットのバインド
         if (window.PetSystem) {
             window.PetSystem.init();
         }
@@ -229,17 +231,25 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         updateAIStatusUI();
         setupEvents();
 
-        // 【デバッグ済みの確実な初期画面遷移】
-        // setTimeout処理を安全にガードし、IDが存在する場合にのみ確実にスタイル操作を実行。
+        // 【セキュア画面遷移フロー】
         setTimeout(() => {
             if (elements.viewTitle) {
                 elements.viewTitle.classList.add('opacity-0');
                 setTimeout(() => {
                     elements.viewTitle.classList.add('hidden');
-                    if (elements.mainApp) {
-                        elements.mainApp.classList.remove('hidden');
-                        // 遷移後に非同期にAPIキー検出及び自動選択肢生成を開始
-                        processGenerationQueue();
+                    
+                    const apiKeyExists = getApiKey();
+                    if (apiKeyExists) {
+                        // A: キーがある場合は通常起動
+                        if (elements.mainApp) {
+                            elements.mainApp.classList.remove('hidden');
+                            processGenerationQueue();
+                        }
+                    } else {
+                        // B: キーがない場合はセキュリティロック（初回登録モーダル強制表示）
+                        if (elements.modalInitialApi) {
+                            elements.modalInitialApi.classList.remove('hidden');
+                        }
                     }
                 }, 500);
             }
@@ -247,7 +257,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
     }
 
     function saveState() {
-        localStorage.setItem('gamiword_pro_core_v2', JSON.stringify({
+        localStorage.setItem('gamiword_secure_save', JSON.stringify({
             streak: state.streak,
             score: state.score,
             combo: state.combo,
@@ -262,7 +272,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
 
     function updateStreak() {
         const today = new Date().toDateString();
-        const lastActive = localStorage.getItem('gamiword_pro_core_v2_active');
+        const lastActive = localStorage.getItem('gamiword_secure_active');
         if (lastActive) {
             const diff = Math.ceil(Math.abs(new Date(today) - new Date(lastActive)) / (1000 * 60 * 60 * 24));
             if (diff === 1) state.streak += 1;
@@ -270,7 +280,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         } else {
             state.streak = 1;
         }
-        localStorage.setItem('gamiword_pro_core_v2_active', today);
+        localStorage.setItem('gamiword_secure_active', today);
     }
 
     function renderHeader() {
@@ -278,7 +288,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         if (elements.headerScore) elements.headerScore.textContent = state.score;
     }
 
-    // ================= 3. ビューマネージャー =================
+    // ================= ビューコントロール =================
     const tabs = {
         'learn': { btn: elements.tabLearn, view: elements.viewLearn, title: 'フォルダ選択' },
         'dict': { btn: elements.tabDict, view: elements.viewDict, title: 'データ図鑑' },
@@ -319,7 +329,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         }
     }
 
-    // ================= 4. フォルダ機能 ＆ 演習オプション =================
+    // ================= フォルダ管理 ＆ 単語追加 =================
     function renderFolderList() {
         if (!elements.folderContainer) return;
         elements.folderContainer.innerHTML = '';
@@ -466,7 +476,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         renderFolderWordList();
         elements.modalAddWord.classList.add('hidden');
         triggerToast("単語を追加したピ！");
-        processGenerationQueue(); // 非同期API生成待ちへ追加
+        processGenerationQueue();
     }
 
     function deleteWord(wordId) {
@@ -477,7 +487,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         renderFolderWordList();
     }
 
-    // ================= 5. 4択演習システム =================
+    // ================= 4択演習システム =================
     function startPractice() {
         const folder = state.folders.find(f => f.id === state.activeFolderId);
         if (!folder) return;
@@ -652,7 +662,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         }
     }
 
-    // ================= 6. データ図鑑 ＆ その他UI =================
+    // ================= データ図鑑 ＆ その他UI =================
     function renderDict() {
         if (!elements.dictList) return;
         elements.dictList.innerHTML = '';
@@ -713,11 +723,29 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         }, 1500);
     }
 
-    // ================= 7. イベントバインド =================
+    // ================= イベントバインド =================
     function setupEvents() {
         elements.tabLearn.addEventListener('click', () => showTab('learn'));
         elements.tabDict.addEventListener('click', () => showTab('dict'));
         elements.tabPet.addEventListener('click', () => showTab('pet'));
+
+        // 初回キー設定の保存
+        if (elements.btnSaveInitialKey) {
+            elements.btnSaveInitialKey.addEventListener('click', () => {
+                const keyVal = elements.inputInitialKey.value.trim();
+                if (keyVal) {
+                    localStorage.setItem('gamiword_api_key', keyVal);
+                    if (elements.modalInitialApi) elements.modalInitialApi.classList.add('hidden');
+                    if (elements.mainApp) {
+                        elements.mainApp.classList.remove('hidden');
+                        updateAIStatusUI();
+                        processGenerationQueue();
+                    }
+                } else {
+                    triggerToast("有効なキーを入力してください。");
+                }
+            });
+        }
 
         elements.btnOpenSettings.addEventListener('click', () => {
             elements.inputApiKey.value = localStorage.getItem('gamiword_api_key') || '';
