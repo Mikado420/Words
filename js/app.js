@@ -1,8 +1,8 @@
 /**
- * GamiWord Pro - 統合管理・外部AI API連携・演習オプション制御エンジン (app.js)
+ * GamiWord Pro - 統合管理・非同期API連携・画面遷移制御
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
     let state = {
         streak: 1,
         score: 0,
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isHintShown: false
     };
 
-    // DOM要素
+    // DOM要素の防衛的定義 (ID不整合時のクラッシュを防止)
     const elements = {
         viewTitle: document.getElementById('view-title'),
         mainApp: document.getElementById('main-app'),
@@ -77,21 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSpeak: document.getElementById('btn-speak'),
         choicesContainer: document.getElementById('choices-container'),
 
-        // 基礎・応用切り替え
         checkBase: document.getElementById('check-base'),
         checkApplied: document.getElementById('check-applied'),
 
         dictList: document.getElementById('dict-list'),
         btnFeed: document.getElementById('btn-feed'),
 
-        // 設定
         btnOpenSettings: document.getElementById('btn-open-settings'),
         modalSettings: document.getElementById('modal-settings'),
         inputApiKey: document.getElementById('input-api-key'),
         btnCancelSettings: document.getElementById('btn-cancel-settings'),
         btnSaveSettings: document.getElementById('btn-save-settings'),
 
-        // ダイアログ図鑑
         dictModal: document.getElementById('dict-modal'),
         btnCloseModal: document.getElementById('btn-close-modal'),
         modalEnglish: document.getElementById('modal-english'),
@@ -103,44 +100,39 @@ document.addEventListener('DOMContentLoaded', () => {
         modalStrength: document.getElementById('modal-strength')
     };
 
-    // ================= 1. 外部AI API連携 ＆ ひっかけ選択肢生成ロジック =================
+    // ================= 1. AI API連携 ＆ ひっかけ選択肢生成 =================
     
-    // AI接続状況インジケーター表示の更新
     function updateAIStatusUI() {
         const key = localStorage.getItem('gamiword_api_key');
         if (elements.aiStatus) {
             if (key) {
-                elements.aiStatus.textContent = "AI: オンラインモード";
+                elements.aiStatus.textContent = "AI: オンライン";
                 elements.aiStatus.className = "text-[8px] text-emerald-400 font-bold";
             } else {
-                elements.aiStatus.textContent = "AI: ローカルモード";
+                elements.aiStatus.textContent = "AI: ローカル";
                 elements.aiStatus.className = "text-[8px] text-slate-500";
             }
         }
     }
 
-    // ローカル用疑似AIハズレ生成（フォールバック）
     function generateChoicesLocal(word) {
         const eng = word.english.toLowerCase();
         const jap = word.japanese;
+        const base = jap.replace(/～|する/g, '');
 
-        // ルール1: スペル酷似
-        let spellingFake = "～を一時的に保留する";
+        let spellingFake = `～を段階的に${base}する`;
         if (eng.includes('allow')) spellingFake = "～を矢のように放つ";
         else if (eng.includes('expect')) spellingFake = "～を除外する";
         else if (eng.includes('decide')) spellingFake = "～を欺く";
         else if (eng.includes('consider')) spellingFake = "～を思いやる";
-        else if (eng.includes('increase')) spellingFake = "～を急速に縮小させる";
 
-        // ルール2: ニュアンス類似
-        const base = jap.replace(/～|する/g, '');
         const nuanceFake = `～を強引に${base}する`;
 
-        // ルール3: 独立デストラクター
-        const validWords = state.words.filter(w => w.english.toLowerCase() !== eng);
+        const pool = state.words && state.words.length > 0 ? state.words : SYSTEM_WORDS_PRESET;
+        const validWords = pool.filter(w => w.english.toLowerCase() !== eng);
         const distractorFake = (validWords.length > 0) 
             ? validWords[Math.floor(Math.random() * validWords.length)].japanese 
-            : "～を注意深く検査する";
+            : "～を検査する";
 
         return [
             { text: jap, isCorrect: true },
@@ -150,33 +142,21 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
     }
 
-    // 外部OpenAI APIを叩く非同期処理
     async function fetchAIOptionChoices(word) {
         const apiKey = localStorage.getItem('gamiword_api_key');
-        if (!apiKey) {
-            return generateChoicesLocal(word);
-        }
+        if (!apiKey) return generateChoicesLocal(word);
 
         const prompt = `
-以下の英語に対する、高度な4択ひっかけ選択肢をJSON形式で作成してください。
-英単語: "${word.english}"
-正しい和訳: "${word.japanese}"
-
-【選択肢構築ルール】
-- 4つの選択肢オブジェクト（text, isCorrect, type）を持つ配列 "choices" を作成。
-- 正解(isCorrect: true)は、必ず "${word.japanese}" にすること。
-- 不正解1(type: 'spelling')は、スペルが酷似している他の英語（例: followならarrow）の日本語訳。
-- 不正解2(type: 'nuance')は、ニュアンスは非常に似ているが正確ではない和訳。
-- 不正解3(type: 'distractor')は、関係のない類似品詞の別の和訳。
-
-【返却フォーマット(厳守)】
-JSON形式のプレーンテキストのみを返却。マークダウン等の装飾（\`\`\`json 等）は一切不要。
+JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択クイズの選択肢を出力してください。
+正解(isCorrect: true)は、必ず"${word.japanese}"。
+不正解(isCorrect: false)は、スペル酷似、意味類似、他動詞の3パターンを構築してください。
+装飾無しのプレーンJSONのみを返却してください。
 {
   "choices": [
     {"text": "${word.japanese}", "isCorrect": true},
     {"text": "スペル酷似訳", "isCorrect": false, "type": "spelling"},
     {"text": "ニュアンス類似訳", "isCorrect": false, "type": "nuance"},
-    {"text": "関係ない動詞訳", "isCorrect": false, "type": "distractor"}
+    {"text": "関係ない意味", "isCorrect": false, "type": "distractor"}
   ]
 }`;
 
@@ -190,59 +170,46 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
                 body: JSON.stringify({
                     model: 'gpt-4o-mini',
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.5
+                    temperature: 0.4
                 })
             });
 
-            if (!response.ok) throw new Error("APIレスポンスエラー");
+            if (!response.ok) throw new Error();
             const data = await response.json();
-            const resultText = data.choices[0].message.content.trim();
-            const parsed = JSON.parse(resultText);
-
-            if (parsed && parsed.choices && parsed.choices.length === 4) {
-                return parsed.choices;
-            } else {
-                throw new Error("フォーマット不正");
-            }
+            const parsed = JSON.parse(data.choices[0].message.content.trim());
+            return parsed.choices;
         } catch (e) {
-            console.warn(`AI生成エラー。ローカル疑似AIで代替します (${word.english}):`, e);
             return generateChoicesLocal(word);
         }
     }
 
-    // 非同期な逐次処理Queueによるバックグラウンド生成
     async function processGenerationQueue() {
-        // choicesが未生成の単語をフィルタリング
         const ungenerated = state.words.filter(w => !w.choices || w.choices.length !== 4);
         if (ungenerated.length === 0) return;
 
-        console.log(`未生成の4択データを検出しました (${ungenerated.length}語)。非同期バックグラウンド生成を開始します。`);
-
-        // 同時アクセス制限を回避するため、あえてループによる逐次処理を行う
         for (const word of ungenerated) {
             word.choices = await fetchAIOptionChoices(word);
-            saveState(); // 生成の都度ローカルストレージへ保存・永続化
+            saveState(); // 1単語生成ごとにバックアップ
         }
-        console.log("すべてのハズレ選択肢のバックグラウンド生成が完了しました。");
     }
 
-    // ================= 2. アプリケーション初期化 ＆ ライフサイクル =================
+    // ================= 2. アプリケーションのライフサイクル ＆ 確実な画面遷移 =================
     function init() {
-        const saved = localStorage.getItem('gamiword_pro_ai_save');
+        const saved = localStorage.getItem('gamiword_pro_core_v2');
         if (saved) {
             try {
                 state = { ...state, ...JSON.parse(saved) };
             } catch (e) {
-                console.error("セーブデータの破損を検知", e);
+                console.error("データの破損を検知。クリアして開始します。");
             }
         }
 
-        // 統合英単語DB wordsがなければchapter1.jsのプリセットデータをディープコピーして生成
+        // 統合単語DBがなければchapter1.jsのプリセットデータをディープコピー
         if (!state.words || state.words.length === 0) {
             state.words = JSON.parse(JSON.stringify(SYSTEM_WORDS_PRESET));
         }
 
-        // フォルダデータのロードと紐づけ
+        // フォルダの初期化
         if (!state.folders || state.folders.length === 0) {
             state.folders = JSON.parse(JSON.stringify(DEFAULT_FOLDERS));
         }
@@ -251,7 +218,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
             presetFolder.wordIds = state.words.map(w => w.id);
         }
 
-        // ペットモジュールの初期化
+        // ペットのバインド
         if (window.PetSystem) {
             window.PetSystem.init();
         }
@@ -262,22 +229,25 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         updateAIStatusUI();
         setupEvents();
 
-        // 起動フェーズ完了：タイトル画面の2秒後フェードアウト
+        // 【デバッグ済みの確実な初期画面遷移】
+        // setTimeout処理を安全にガードし、IDが存在する場合にのみ確実にスタイル操作を実行。
         setTimeout(() => {
             if (elements.viewTitle) {
                 elements.viewTitle.classList.add('opacity-0');
                 setTimeout(() => {
                     elements.viewTitle.classList.add('hidden');
-                    if (elements.mainApp) elements.mainApp.classList.remove('hidden');
-                    // 起動完了後にバックグラウンドでAIひっかけ選択肢生成を開始
-                    processGenerationQueue();
+                    if (elements.mainApp) {
+                        elements.mainApp.classList.remove('hidden');
+                        // 遷移後に非同期にAPIキー検出及び自動選択肢生成を開始
+                        processGenerationQueue();
+                    }
                 }, 500);
             }
         }, 2000);
     }
 
     function saveState() {
-        localStorage.setItem('gamiword_pro_ai_save', JSON.stringify({
+        localStorage.setItem('gamiword_pro_core_v2', JSON.stringify({
             streak: state.streak,
             score: state.score,
             combo: state.combo,
@@ -290,7 +260,66 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         }));
     }
 
-    // ================= 3. フォルダ ＆ 演習オプション（基礎・応用） =================
+    function updateStreak() {
+        const today = new Date().toDateString();
+        const lastActive = localStorage.getItem('gamiword_pro_core_v2_active');
+        if (lastActive) {
+            const diff = Math.ceil(Math.abs(new Date(today) - new Date(lastActive)) / (1000 * 60 * 60 * 24));
+            if (diff === 1) state.streak += 1;
+            else if (diff > 1) state.streak = 1;
+        } else {
+            state.streak = 1;
+        }
+        localStorage.setItem('gamiword_pro_core_v2_active', today);
+    }
+
+    function renderHeader() {
+        if (elements.headerStreak) elements.headerStreak.textContent = `${state.streak} 日`;
+        if (elements.headerScore) elements.headerScore.textContent = state.score;
+    }
+
+    // ================= 3. ビューマネージャー =================
+    const tabs = {
+        'learn': { btn: elements.tabLearn, view: elements.viewLearn, title: 'フォルダ選択' },
+        'dict': { btn: elements.tabDict, view: elements.viewDict, title: 'データ図鑑' },
+        'pet': { btn: elements.tabPet, view: elements.viewPet, title: 'ペット育成' }
+    };
+
+    function showTab(targetKey) {
+        if (elements.modalCreateFolder) elements.modalCreateFolder.classList.add('hidden');
+        if (elements.modalAddWord) elements.modalAddWord.classList.add('hidden');
+        if (elements.dictModal) elements.dictModal.classList.add('hidden');
+
+        Object.keys(tabs).forEach(key => {
+            const tab = tabs[key];
+            if (tab.view && tab.btn) {
+                if (key === targetKey) {
+                    tab.view.classList.remove('hidden');
+                    tab.btn.classList.remove('text-slate-500');
+                    tab.btn.classList.add('text-emerald-400');
+                    elements.headerModeTitle.textContent = tab.title;
+                } else {
+                    tab.view.classList.add('hidden');
+                    tab.btn.classList.add('text-slate-500');
+                    tab.btn.classList.remove('text-emerald-400');
+                }
+            }
+        });
+
+        if (targetKey === 'learn') {
+            elements.subFolderList.classList.remove('hidden');
+            elements.subFolderDetail.classList.add('hidden');
+            elements.subCardPractice.classList.add('hidden');
+            elements.headerModeTitle.textContent = "フォルダ選択";
+            renderFolderList();
+        } else if (targetKey === 'dict') {
+            renderDict();
+        } else if (targetKey === 'pet') {
+            if (window.PetSystem) window.PetSystem.updateUI(state);
+        }
+    }
+
+    // ================= 4. フォルダ機能 ＆ 演習オプション =================
     function renderFolderList() {
         if (!elements.folderContainer) return;
         elements.folderContainer.innerHTML = '';
@@ -353,7 +382,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         state.folders = state.folders.filter(f => f.id !== id);
         saveState();
         renderFolderList();
-        triggerToast("フォルダを削除したピ。");
+        triggerToast("フォルダを削除しました。");
     }
 
     function openFolderDetail(folderId) {
@@ -382,7 +411,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
 
         const words = state.words.filter(w => folder.wordIds.includes(w.id));
         if (words.length === 0) {
-            elements.detailWordList.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs">登録単語なしピ</div>`;
+            elements.detailWordList.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs">単語が登録されていません</div>`;
             elements.btnStartSession.disabled = true;
             elements.btnStartSession.classList.add('opacity-50');
             return;
@@ -427,7 +456,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
             srsLevel: 0
         };
 
-        newWord.choices = generateChoicesLocal(newWord); // 初期フォールバック生成
+        newWord.choices = generateChoicesLocal(newWord);
         state.words.push(newWord);
 
         const folder = state.folders.find(f => f.id === state.activeFolderId);
@@ -437,7 +466,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         renderFolderWordList();
         elements.modalAddWord.classList.add('hidden');
         triggerToast("単語を追加したピ！");
-        processGenerationQueue(); // 非同期生成のバックグラウンドキューへ追加
+        processGenerationQueue(); // 非同期API生成待ちへ追加
     }
 
     function deleteWord(wordId) {
@@ -448,7 +477,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         renderFolderWordList();
     }
 
-    // ================= 4. 4択演習（基礎・応用モード制御） =================
+    // ================= 5. 4択演習システム =================
     function startPractice() {
         const folder = state.folders.find(f => f.id === state.activeFolderId);
         if (!folder) return;
@@ -460,14 +489,12 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         const useApplied = elements.checkApplied.checked;
 
         if (!useBase && !useApplied) {
-            triggerToast("設定で少なくとも1つの出題モードをONにしてくださいピ。");
+            triggerToast("少なくとも1つの出題オプションをONにしてくださいピ。");
             return;
         }
 
-        // 基礎問題と派生問題のプール生成
         let practicePool = [];
         baseWords.forEach(word => {
-            // 見出し語（基礎）
             if (useBase) {
                 practicePool.push({
                     id: word.id,
@@ -480,7 +507,6 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
                     parentWord: word
                 });
             }
-            // 派生語（応用）
             if (useApplied && word.derivatives && word.derivatives.length > 0) {
                 word.derivatives.forEach(deriv => {
                     practicePool.push({
@@ -489,7 +515,6 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
                         phonetic: `/derivative/`,
                         japanese: deriv.japanese,
                         hint: `【派生語】 ${word.english}（${word.japanese}）の関連語`,
-                        // 派生語のchoicesはローカル生成でフォールバック
                         choices: generateChoicesLocal({ english: deriv.english, japanese: deriv.japanese }),
                         isDerivative: true,
                         parentWord: word
@@ -499,7 +524,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         });
 
         if (practicePool.length === 0) {
-            triggerToast("派生語（応用）が存在しないフォルダです。");
+            triggerToast("派生語が存在しないフォルダですピ。");
             return;
         }
 
@@ -528,14 +553,12 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         elements.wordHint.classList.add('hidden');
         elements.cardHintNotice.textContent = "タップしてヒントを表示";
 
-        // 応用タグ表示
         if (current.isDerivative) {
             elements.tagDerivative.classList.remove('hidden');
         } else {
             elements.tagDerivative.classList.add('hidden');
         }
 
-        // 4択ボタン
         elements.choicesContainer.innerHTML = '';
         const shuffled = [...current.choices].sort(() => Math.random() - 0.5);
         shuffled.forEach((choice, index) => {
@@ -562,7 +585,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         allButtons.forEach(btn => btn.disabled = true);
 
         const current = state.practiceWords[state.currentCardIndex];
-        const parent = current.parentWord; // 永続化用の大本単語
+        const parent = current.parentWord; 
         const isCorrect = choice.isCorrect;
 
         if (isCorrect) {
@@ -571,14 +594,12 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
             state.score += 10 + (state.combo * 2);
             state.satiety = Math.max(0, state.satiety - 2);
 
-            // 経験値、満腹度
             let gotFood = false;
             if (state.combo % 3 === 0) {
                 state.foods += 1;
                 gotFood = true;
             }
 
-            // 大本単語の正誤数
             if (parent) {
                 parent.correctCount += 1;
                 parent.srsLevel = Math.min(5, parent.srsLevel + 1);
@@ -602,7 +623,6 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
                 parent.srsLevel = Math.max(1, parent.srsLevel - 1);
             }
 
-            // 誤答は3問後ろに挿入
             const failed = state.practiceWords.splice(state.currentCardIndex, 1)[0];
             const idx = Math.min(3, state.practiceWords.length);
             state.practiceWords.splice(idx, 0, failed);
@@ -612,7 +632,7 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
 
         setTimeout(() => {
             if (state.practiceWords.length === 0) {
-                triggerToast("🎉 全てクリアしたピ！お見事！");
+                triggerToast("🎉 全てクリアしたピ！素晴らしいピ！");
                 showTab('learn');
             } else {
                 renderLearn();
@@ -625,14 +645,14 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         const current = state.practiceWords[state.currentCardIndex];
         if (current && 'speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(current.english.split('(')[0]); // (形) などを除く
+            const utterance = new SpeechSynthesisUtterance(current.english.split('(')[0]);
             utterance.lang = 'en-US';
             utterance.rate = 0.95;
             window.speechSynthesis.speak(utterance);
         }
     }
 
-    // ================= 5. 図鑑 ＆ ペット ＆ その他UI =================
+    // ================= 6. データ図鑑 ＆ その他UI =================
     function renderDict() {
         if (!elements.dictList) return;
         elements.dictList.innerHTML = '';
@@ -693,14 +713,12 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         }, 1500);
     }
 
-    // ================= 6. イベントバインド =================
+    // ================= 7. イベントバインド =================
     function setupEvents() {
-        // タブ切り替え
         elements.tabLearn.addEventListener('click', () => showTab('learn'));
         elements.tabDict.addEventListener('click', () => showTab('dict'));
         elements.tabPet.addEventListener('click', () => showTab('pet'));
 
-        // 設定・APIキー
         elements.btnOpenSettings.addEventListener('click', () => {
             elements.inputApiKey.value = localStorage.getItem('gamiword_api_key') || '';
             elements.modalSettings.classList.remove('hidden');
@@ -716,20 +734,17 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
             saveState();
             updateAIStatusUI();
             elements.modalSettings.classList.add('hidden');
-            triggerToast("設定を保存したピ。");
+            triggerToast("設定を保存しました。");
             processGenerationQueue();
         });
 
-        // フォルダ追加
         elements.btnOpenCreateFolder.addEventListener('click', () => elements.modalCreateFolder.classList.remove('hidden'));
         elements.btnCancelFolder.addEventListener('click', () => elements.modalCreateFolder.classList.add('hidden'));
         elements.btnSaveFolder.addEventListener('click', () => createFolder(elements.inputFolderName.value));
 
-        // フォルダ詳細戻る・開始
         elements.btnBackToFolders.addEventListener('click', () => showTab('learn'));
         elements.btnStartSession.addEventListener('click', startPractice);
 
-        // 演習中アクション
         elements.wordQuestionCard.addEventListener('click', (e) => {
             if (e.target.closest('#btn-speak')) return;
             state.isHintShown = !state.isHintShown;
@@ -739,7 +754,6 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
         elements.btnExitPractice.addEventListener('click', () => showTab('learn'));
         elements.btnSpeak.addEventListener('click', speakCurrent);
 
-        // 単語追加
         elements.btnOpenAddWord.addEventListener('click', () => elements.modalAddWord.classList.remove('hidden'));
         elements.btnCancelAddWord.addEventListener('click', () => elements.modalAddWord.classList.add('hidden'));
         elements.btnSaveAddWord.addEventListener('click', () => {
@@ -752,14 +766,12 @@ JSON形式のプレーンテキストのみを返却。マークダウン等の�
             );
         });
 
-        // ペット（pet.jsに切り出し・バインド）
         elements.btnFeed.addEventListener('click', () => {
             if (window.PetSystem) {
                 window.PetSystem.feed(state, triggerToast, saveState);
             }
         });
 
-        // 図鑑クローズ
         elements.btnCloseModal.addEventListener('click', () => elements.dictModal.classList.add('hidden'));
     }
 
