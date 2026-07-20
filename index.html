@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GamiWord Pro - 4択AI＆シス単</title>
+    <title>GamiWord Pro AI-Edition</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden select-none">
 
-    <!-- ================= 1. タイトル画面 (起動時2秒表示) ================= -->
+    <!-- ================= 1. タイトル画面 ================= -->
     <div id="view-title" class="h-[100dvh] w-full flex flex-col justify-center items-center bg-slate-900 transition-opacity duration-500 z-50 absolute inset-0">
         <div class="text-center animate-pulse">
             <div class="text-6xl mb-4">🐉</div>
             <h1 class="text-3xl font-extrabold tracking-widest text-emerald-400">GamiWord Pro</h1>
-            <p class="text-xs text-slate-500 mt-2">システム英単語 Ch.1 全174語搭載</p>
+            <p class="text-xs text-slate-500 mt-2">システム英単語 Ch.1 ＆ 派生語対応</p>
         </div>
     </div>
 
-    <!-- ================= メインアプリケーションコンテナ (100dvh固定) ================= -->
+    <!-- ================= メインコンテナ ================= -->
     <div id="main-app" class="hidden h-[100dvh] w-full max-w-md mx-auto flex flex-col justify-between overflow-hidden">
         
         <!-- ヘッダー (8dvh) -->
@@ -28,8 +28,12 @@
                 <span class="text-lg">🔥</span>
                 <span id="header-streak" class="font-bold text-sm text-amber-400">1 日</span>
             </div>
-            <div id="header-mode-title" class="font-bold text-sm tracking-wide text-slate-300">フォルダ選択</div>
-            <div class="flex items-center space-x-1">
+            <div class="flex flex-col items-center">
+                <div id="header-mode-title" class="font-bold text-xs tracking-wide text-slate-300">フォルダ選択</div>
+                <div id="ai-status" class="text-[8px] text-slate-500">AI: ローカルモード</div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="btn-open-settings" class="text-xs text-slate-400 mr-2 hover:text-slate-200">⚙️</button>
                 <span id="header-score" class="font-bold text-sm text-emerald-400">0</span>
                 <span class="text-lg">🏆</span>
             </div>
@@ -41,20 +45,20 @@
             <!-- 2-A. 学習・管理タブ -->
             <div id="view-learn" class="absolute inset-0 flex flex-col p-4 transition-transform duration-300">
                 
-                <!-- [A-1] フォルダ選択サブビュー -->
+                <!-- [A-1] フォルダ選択ビュー -->
                 <div id="subview-folder-list" class="flex flex-col h-full justify-between">
                     <div class="flex-1 overflow-y-auto space-y-3 pr-1">
                         <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xs font-bold text-slate-400">フォルダを選択して学習開始</h3>
+                            <h3 class="text-xs font-bold text-slate-400">フォルダを選択</h3>
                             <button id="btn-open-create-folder" class="text-xs text-emerald-400 font-bold active:scale-95">＋ 新規作成</button>
                         </div>
                         <div id="folder-container" class="space-y-2">
-                            <!-- JSで動的にフォルダを生成 -->
+                            <!-- 動的生成 -->
                         </div>
                     </div>
                 </div>
 
-                <!-- [A-2] フォルダ内単語一覧＆編集サブビュー -->
+                <!-- [A-2] フォルダ詳細ビュー（基礎・応用設定を追加） -->
                 <div id="subview-folder-detail" class="hidden flex flex-col h-full justify-between">
                     <div class="flex items-center justify-between mb-2">
                         <button id="btn-back-to-folders" class="text-xs text-slate-400">◀ 戻る</button>
@@ -64,12 +68,28 @@
                     <div id="detail-word-list" class="flex-1 overflow-y-auto space-y-2 mb-2 pr-1">
                         <!-- 単語一覧 -->
                     </div>
+                    
+                    <!-- 基礎・応用切り替えUI -->
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl mb-3 space-y-2">
+                        <div class="text-xs text-slate-400 font-bold">演習オプション設定</div>
+                        <div class="flex justify-around items-center py-1 text-xs">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="check-base" checked class="w-4 h-4 text-emerald-600 bg-slate-950 border-slate-800 rounded focus:ring-emerald-500">
+                                <span>基礎問題（見出し語）</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="check-applied" checked class="w-4 h-4 text-emerald-600 bg-slate-950 border-slate-800 rounded focus:ring-emerald-500">
+                                <span>応用問題（派生語）</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <button id="btn-start-session" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-extrabold py-3 rounded-xl text-sm active:scale-95 transition">
                         ⚡ 4択演習を開始する
                     </button>
                 </div>
 
-                <!-- [A-3] 4択クイズ演習メインビュー -->
+                <!-- [A-3] 4択クイズ演習ビュー -->
                 <div id="subview-card-practice" class="hidden flex flex-col h-full justify-between">
                     <div class="h-6 flex justify-between items-center px-1">
                         <button id="btn-exit-practice" class="text-xs text-slate-500">◀ 中断</button>
@@ -79,11 +99,14 @@
                         <span class="text-xs text-slate-500">残り: <span id="remaining-count">0</span>問</span>
                     </div>
 
-                    <!-- 問題カード表示 (タップでヒント表示) -->
+                    <!-- 問題カード -->
                     <div id="word-question-card" class="w-full h-[22dvh] my-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between p-4 relative shadow-md cursor-pointer">
                         <div class="w-full flex justify-between items-center text-[10px] text-slate-500">
-                            <span id="card-hint-notice">カードをタップしてヒントを表示</span>
-                            <button id="btn-speak" class="p-1 text-slate-400 hover:text-slate-200">🔊 発音</button>
+                            <span id="card-hint-notice">タップでヒント表示</span>
+                            <div class="flex space-x-2">
+                                <span id="tag-derivative" class="hidden bg-purple-900/60 text-purple-200 border border-purple-700 px-1.5 rounded">応用（派生語）</span>
+                                <button id="btn-speak" class="p-1 text-slate-400 hover:text-slate-200">🔊 音声</button>
+                            </div>
                         </div>
                         <div class="text-center">
                             <h2 id="word-english" class="text-3xl font-extrabold tracking-wide text-white">...</h2>
@@ -94,25 +117,25 @@
                         </div>
                     </div>
 
-                    <!-- 4択選択肢ボタンエリア (親指の届く位置) -->
+                    <!-- 4択選択肢 -->
                     <div id="choices-container" class="grid grid-rows-4 gap-2.5 h-[40dvh] items-center py-2">
-                        <!-- 動的に4択ボタンが生成 -->
+                        <!-- 動的生成 -->
                     </div>
                 </div>
 
             </div>
 
-            <!-- 2-B. データ図鑑ビュー -->
+            <!-- 2-B. データ図鑑タブ -->
             <div id="view-dict" class="absolute inset-0 hidden flex flex-col p-4 transition-transform duration-300">
-                <p class="text-xs text-slate-500 mb-2">全単語の記憶強度と学習ステータス</p>
+                <p class="text-xs text-slate-500 mb-2">全単語の記憶強度・SRSレベル管理</p>
                 <div id="dict-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
-                    <!-- JSで動的に単語を生成 -->
+                    <!-- 動的生成 -->
                 </div>
             </div>
 
-            <!-- 2-C. ペット育成ビュー -->
+            <!-- 2-C. ペット育成タブ -->
             <div id="view-pet" class="absolute inset-0 hidden flex flex-col justify-between p-4 transition-transform duration-300">
-                <!-- ステータス表示 -->
+                <!-- ステータス（pet.jsに切り出し・描画連動） -->
                 <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
                     <div class="flex justify-between items-center">
                         <span id="pet-level-name" class="font-extrabold text-sm text-slate-200">Lv.1 タマゴ</span>
@@ -132,15 +155,15 @@
                     </div>
                 </div>
 
-                <!-- ペットアニメーションエリア -->
+                <!-- ペットアニメーション -->
                 <div class="flex-1 flex flex-col justify-center items-center relative">
                     <div id="pet-avatar" class="text-7xl p-4 bg-slate-900 rounded-full border border-slate-800 animate-idle">🥚</div>
                     <p id="pet-bubble" class="mt-4 bg-slate-900 border border-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl relative max-w-xs text-center">
-                        「トントン...中から音がするピ」
+                        ...
                     </p>
                 </div>
 
-                <!-- 育成アクションエリア -->
+                <!-- 育成アクション -->
                 <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
                     <div class="text-xs">
                         <span class="text-slate-400">おやつ:</span>
@@ -174,11 +197,31 @@
 
     <!-- ================= モーダル群 ================= -->
     
-    <!-- 1. 新規フォルダ作成 -->
+    <!-- 設定・APIキー設定モーダル -->
+    <div id="modal-settings" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5">
+            <h4 class="text-base font-bold text-white mb-2">アプリ設定</h4>
+            <div class="space-y-3 mb-4">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">OpenAI API Key（ハズレ選択肢生成用）</label>
+                    <input type="password" id="input-api-key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="sk-...">
+                </div>
+                <p class="text-[9px] text-slate-500 leading-normal">
+                    ※キーはローカルブラウザ（LocalStorage）にのみ安全に保存されます。キーがない場合はローカルの簡易ひっかけロジックが働きます。
+                </p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-cancel-settings" class="bg-slate-800 text-slate-300 rounded-lg py-2 text-xs">閉じる</button>
+                <button id="btn-save-settings" class="bg-emerald-600 text-slate-950 font-bold rounded-lg py-2 text-xs">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. フォルダ作成モーダル -->
     <div id="modal-create-folder" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5">
             <h4 class="text-base font-bold text-white mb-3">新規フォルダ作成</h4>
-            <input type="text" id="input-folder-name" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 mb-4" placeholder="フォルダ名を入力" maxlength="15">
+            <input type="text" id="input-folder-name" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 mb-4" placeholder="フォルダ名" maxlength="15">
             <div class="grid grid-cols-2 gap-3">
                 <button id="btn-cancel-folder" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-2 text-xs">キャンセル</button>
                 <button id="btn-save-folder" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg py-2 text-xs">作成</button>
@@ -186,33 +229,33 @@
         </div>
     </div>
 
-    <!-- 2. 単語追加 -->
+    <!-- 2. 単語追加モーダル -->
     <div id="modal-add-word" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5">
             <h4 class="text-base font-bold text-white mb-3">新規単語追加</h4>
             <div class="space-y-3 mb-4">
                 <input type="text" id="input-word-eng" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="英語（例: react）">
-                <input type="text" id="input-word-phonetic" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="発音記号 (任意)">
-                <input type="text" id="input-word-jap" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="日本語訳（例: 反応する）">
-                <input type="text" id="input-word-hint" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="ミニマルフレーズ等（ヒント用）">
+                <input type="text" id="input-word-phonetic" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="発音記号">
+                <input type="text" id="input-word-jap" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="日本語訳">
+                <input type="text" id="input-word-hint" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="ヒント（ミニフレーズ等）">
                 <textarea id="input-word-example" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 h-16 resize-none" placeholder="例文 (任意)"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <button id="btn-cancel-add-word" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-2 text-xs">キャンセル</button>
-                <button id="btn-save-add-word" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg py-2 text-xs">追加</button>
+                <button id="btn-cancel-add-word" class="bg-slate-800 text-slate-300 rounded-lg py-2 text-xs">キャンセル</button>
+                <button id="btn-save-add-word" class="bg-emerald-600 text-slate-950 font-bold rounded-lg py-2 text-xs">追加</button>
             </div>
         </div>
     </div>
 
-    <!-- 3. 詳細ダイアログ (図鑑用) -->
+    <!-- 3. 詳細ダイアログ (図鑑) -->
     <div id="dict-modal" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 relative">
-            <button id="btn-close-modal" class="absolute top-3 right-3 text-slate-500 hover:text-slate-300 text-sm">✕</button>
+            <button id="btn-close-modal" class="absolute top-3 right-3 text-slate-500 text-sm">✕</button>
             <h4 id="modal-english" class="text-2xl font-bold text-white">English</h4>
             <p id="modal-phonetic" class="text-xs text-slate-500 mb-3">/phonetic/</p>
             <hr class="border-slate-800 mb-3">
             <p id="modal-japanese" class="text-sm font-semibold text-emerald-400 mb-2">日本語訳</p>
-            <p id="modal-example" class="text-xs text-slate-400 leading-relaxed mb-4">例文がここに表示されます。</p>
+            <p id="modal-example" class="text-xs text-slate-400 leading-relaxed mb-4">例文</p>
             <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 bg-slate-950 p-3 rounded-lg">
                 <div>正答率: <span id="modal-accuracy" class="text-slate-300">0%</span></div>
                 <div>学習回数: <span id="modal-count" class="text-slate-300">0回</span></div>
@@ -221,8 +264,9 @@
         </div>
     </div>
 
-    <!-- JSファイルの読み込み -->
-    <script src="js/data.js"></script>
-    <script src="js/app.js"></script>
+    <!-- JSファイル分割ロード -->
+    <script src="js/chapter1.js" defer></script>
+    <script src="js/pet.js" defer></script>
+    <script src="js/app.js" defer></script>
 </body>
 </html>
