@@ -2,24 +2,24 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GamiWord 4択AIエディション</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GamiWord Pro - 4択AI＆シス単</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden select-none">
 
-    <!-- ================= 1. タイトル画面 ================= -->
+    <!-- ================= 1. タイトル画面 (起動時2秒表示) ================= -->
     <div id="view-title" class="h-[100dvh] w-full flex flex-col justify-center items-center bg-slate-900 transition-opacity duration-500 z-50 absolute inset-0">
         <div class="text-center animate-pulse">
             <div class="text-6xl mb-4">🐉</div>
-            <h1 class="text-3xl font-extrabold tracking-widest text-emerald-400">GamiWord AI</h1>
-            <p class="text-xs text-slate-500 mt-2">ひっかけ自動生成搭載 4択英単語</p>
+            <h1 class="text-3xl font-extrabold tracking-widest text-emerald-400">GamiWord Pro</h1>
+            <p class="text-xs text-slate-500 mt-2">システム英単語 Ch.1 全174語搭載</p>
         </div>
     </div>
 
-    <!-- ================= メインアプリケーションコンテナ ================= -->
+    <!-- ================= メインアプリケーションコンテナ (100dvh固定) ================= -->
     <div id="main-app" class="hidden h-[100dvh] w-full max-w-md mx-auto flex flex-col justify-between overflow-hidden">
         
         <!-- ヘッダー (8dvh) -->
@@ -38,14 +38,14 @@
         <!-- ================= 各ビューエリア (77dvh) ================= -->
         <main class="h-[77dvh] overflow-hidden relative">
 
-            <!-- 2-A. 学習タブ（フォルダ選択 ＆ 演習画面） -->
+            <!-- 2-A. 学習・管理タブ -->
             <div id="view-learn" class="absolute inset-0 flex flex-col p-4 transition-transform duration-300">
                 
                 <!-- [A-1] フォルダ選択サブビュー -->
                 <div id="subview-folder-list" class="flex flex-col h-full justify-between">
                     <div class="flex-1 overflow-y-auto space-y-3 pr-1">
                         <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xs font-bold text-slate-400">フォルダを選択</h3>
+                            <h3 class="text-xs font-bold text-slate-400">フォルダを選択して学習開始</h3>
                             <button id="btn-open-create-folder" class="text-xs text-emerald-400 font-bold active:scale-95">＋ 新規作成</button>
                         </div>
                         <div id="folder-container" class="space-y-2">
@@ -79,8 +79,8 @@
                         <span class="text-xs text-slate-500">残り: <span id="remaining-count">0</span>問</span>
                     </div>
 
-                    <!-- 問題カード表示 (タップでミニマルフレーズ/ヒント表示) -->
-                    <div id="word-question-card" class="w-full h-[22dvh] my-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between p-4 relative shadow-md">
+                    <!-- 問題カード表示 (タップでヒント表示) -->
+                    <div id="word-question-card" class="w-full h-[22dvh] my-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between p-4 relative shadow-md cursor-pointer">
                         <div class="w-full flex justify-between items-center text-[10px] text-slate-500">
                             <span id="card-hint-notice">カードをタップしてヒントを表示</span>
                             <button id="btn-speak" class="p-1 text-slate-400 hover:text-slate-200">🔊 発音</button>
@@ -96,7 +96,7 @@
 
                     <!-- 4択選択肢ボタンエリア (親指の届く位置) -->
                     <div id="choices-container" class="grid grid-rows-4 gap-2.5 h-[40dvh] items-center py-2">
-                        <!-- 動的に4択ボタンが生成されます -->
+                        <!-- 動的に4択ボタンが生成 -->
                     </div>
                 </div>
 
@@ -104,7 +104,7 @@
 
             <!-- 2-B. データ図鑑ビュー -->
             <div id="view-dict" class="absolute inset-0 hidden flex flex-col p-4 transition-transform duration-300">
-                <p class="text-xs text-slate-500 mb-2">単語の学習ステータス（タップで詳細）</p>
+                <p class="text-xs text-slate-500 mb-2">全単語の記憶強度と学習ステータス</p>
                 <div id="dict-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
                     <!-- JSで動的に単語を生成 -->
                 </div>
@@ -194,7 +194,7 @@
                 <input type="text" id="input-word-eng" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="英語（例: react）">
                 <input type="text" id="input-word-phonetic" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="発音記号 (任意)">
                 <input type="text" id="input-word-jap" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="日本語訳（例: 反応する）">
-                <input type="text" id="input-word-hint" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="ミニマルフレーズ等（ヒント表示用）">
+                <input type="text" id="input-word-hint" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500" placeholder="ミニマルフレーズ等（ヒント用）">
                 <textarea id="input-word-example" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 h-16 resize-none" placeholder="例文 (任意)"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -221,7 +221,7 @@
         </div>
     </div>
 
-    <!-- JavaScript 分割ファイル読み込み -->
+    <!-- JSファイルの読み込み -->
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
 </body>
