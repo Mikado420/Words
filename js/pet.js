@@ -1,18 +1,15 @@
 /**
- * GamiWord Pro - ペット育成システムモジュール (pet.js)
- * ロジック、ステータス、描画、進化テーブルの完全分離
+ * GamiWord Pro - ペット育成システムモジュール
  */
 
 window.PetSystem = (() => {
-    // ペット進化テーブル
     const PET_STAGES = [
         { minLevel: 1, maxLevel: 2, avatar: '🥚', name: 'タマゴ', messages: ["トントン...中から音がするピ", "動かすと少し揺れるピ！"] },
-        { minLevel: 3, maxLevel: 5, avatar: '🐣', name: 'ひよこ（殻つき）', messages: ["パカッ！生まれたピ！", "もっと単語を食べたいピ！", "おやつはいつも大歓迎だピ！"] },
+        { minLevel: 3, maxLevel: 5, avatar: '🐣', name: 'ひよこ（殻つき）', messages: ["パカッ！生まれたピ！", "もっと単語を食べたいピ！", "おやつはいつでも大歓迎だピ！"] },
         { minLevel: 6, maxLevel: 9, avatar: '🐥', name: 'ひよこ', messages: ["羽がフサフサしてきたピ！", "頑張る主人が大好きだピ！", "たくさん正解しておやつをくれピ！"] },
         { minLevel: 10, maxLevel: 999, avatar: '🐉', name: 'ミニドラゴン', messages: ["ウオオオン！強くなったピ！", "完全にマスターしたピ！", "もう教えることは何もないピ！"] }
     ];
 
-    // DOM要素の保持 (初期化時にバインド)
     let dom = {};
 
     function bindDOM() {
@@ -29,14 +26,13 @@ window.PetSystem = (() => {
     }
 
     return {
-        // 初期バインド
         init: function() {
             bindDOM();
         },
 
-        // ペットUI描画処理
         updateUI: function(state) {
-            if (!dom.levelName) bindDOM(); // 遅延バインド対応
+            // 要素未取得の時のみ遅延バインドを実行
+            if (!dom.levelName) bindDOM();
 
             const stage = PET_STAGES.find(s => state.level >= s.minLevel && state.level <= s.maxLevel) || PET_STAGES[0];
             
@@ -44,12 +40,10 @@ window.PetSystem = (() => {
             if (dom.levelName) dom.levelName.textContent = `Lv.${state.level} ${stage.name}`;
             if (dom.xpText) dom.xpText.textContent = `${state.xp} / 100 XP`;
             if (dom.xpBar) dom.xpBar.style.width = `${state.xp}%`;
-            
             if (dom.satietyText) dom.satietyText.textContent = `${state.satiety}%`;
             if (dom.satietyBar) dom.satietyBar.style.width = `${state.satiety}%`;
             if (dom.foodCount) dom.foodCount.textContent = `🍪 ${state.foods} 個`;
 
-            // 状態によるバブルメッセージの分岐
             if (dom.bubble && dom.avatar) {
                 if (state.satiety < 20) {
                     dom.bubble.textContent = "「ペコペコだピ...おやつが欲しいピ」";
@@ -62,7 +56,6 @@ window.PetSystem = (() => {
             }
         },
 
-        // 餌やり（おやつ）実行処理
         feed: function(state, onToast, onSave) {
             if (state.foods <= 0) {
                 onToast("おやつ（🍪）がないピ！演習をクリアしてピ！");
@@ -86,7 +79,6 @@ window.PetSystem = (() => {
             onSave();
             this.updateUI(state);
 
-            // アニメーション適用
             if (dom.avatar) {
                 dom.avatar.classList.remove('animate-idle');
                 dom.avatar.classList.add('animate-happy');
