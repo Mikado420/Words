@@ -1,6 +1,5 @@
-/* ================= スマートフォン特有のレイアウト・バグ防止対策 ================= */
+/* ================= スマートフォン特有のレイアウト・ダブルタップ・スクロール防止 ================= */
 
-/* 高速タップ時の拡大・ズームを強制禁止 */
 button,
 a,
 input,
@@ -10,22 +9,21 @@ select,
 #word-question-card,
 #choices-container button {
     touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent; /* タップ時の一瞬の青ハイライトを無効化 */
+    -webkit-tap-highlight-color: transparent; /* タップハイライトの無効化 */
 }
 
-/* 端末の不意な長押しによるテキスト選択やメニュー展開の防止 */
 body {
-    overscroll-behavior-y: contain; /* 引っ張り更新の禁止 */
+    overscroll-behavior-y: contain; /* 引っ張りスクロールによるリロードの抑制 */
     -webkit-user-select: none;
     user-select: none;
 }
 
 input, textarea {
     -webkit-user-select: text;
-    user-select: text; /* テキスト入力エリアのみ通常選択可能にする */
+    user-select: text; /* フォーム入力要素のみ通常選択を許可 */
 }
 
-/* スクロールバーの非表示・スタイライズ */
+/* スクロールバーのスタイライズ */
 ::-webkit-scrollbar {
     width: 4px;
 }
@@ -37,7 +35,7 @@ input, textarea {
     border-radius: 9999px;
 }
 
-/* ペットのアイドルピコピコモーション */
+/* アニメーション */
 @keyframes idle {
     0%, 100% {
         transform: translateY(0) scaleY(1);
@@ -50,7 +48,6 @@ input, textarea {
     animation: idle 2s infinite ease-in-out;
 }
 
-/* おやつ捕食時の喜び跳ねモーション */
 @keyframes happy {
     0%, 100% {
         transform: translateY(0) scale(1);
