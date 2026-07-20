@@ -1,18 +1,28 @@
-/* ================= スマホ連続タップバグ（ダブルタップズーム）防止 ================= */
+/* ================= スマートフォン特有の操作性・バグ防止対策 ================= */
+
+/* 高速タップ時の拡大・ズームを強制禁止 */
 button,
 a,
 input,
 textarea,
 select,
 [role="button"],
-#word-question-card {
-    touch-action: manipulation; /* ダブルタップズーム禁止 */
-    -webkit-tap-highlight-color: transparent; /* タップ時の一瞬の青ハイライトを排除 */
+#word-question-card,
+#choices-container button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent; /* タップ時の一瞬の青ハイライトを無効化 */
 }
 
-/* 画面引っ張りによる強制リフレッシュの防止 */
+/* 端末の不意な長押しによるテキスト選択やメニュー展開の防止 */
 body {
     overscroll-behavior-y: contain;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+input, textarea {
+    -webkit-user-select: text;
+    user-select: text; /* テキスト入力エリアのみ選択可能にする */
 }
 
 /* スクロールバーの非表示・スタイライズ */
@@ -27,7 +37,21 @@ body {
     border-radius: 9999px;
 }
 
-/* ペットのアイドルアニメーション */
+/* 3Dフリップなどの将来の拡張用 */
+.perspective {
+    perspective: 1000px;
+}
+.transform-style-3d {
+    transform-style: preserve-3d;
+}
+.backface-hidden {
+    backface-visibility: hidden;
+}
+.rotate-y-180 {
+    transform: rotateY(180deg);
+}
+
+/* ペットのアイドルピコピコ上下アニメーション */
 @keyframes idle {
     0%, 100% {
         transform: translateY(0) scaleY(1);
@@ -40,7 +64,7 @@ body {
     animation: idle 2s infinite ease-in-out;
 }
 
-/* 喜びアニメーション */
+/* エサ（おやつ）を与えた際の大喜び飛び跳ねアニメーション */
 @keyframes happy {
     0%, 100% {
         transform: translateY(0) scale(1);
