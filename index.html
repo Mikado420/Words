@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GamiWord - スマホ特化型英単語ゲーム</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden select-none">
+
+    <!-- ================= 1. タイトル画面 ================= -->
+    <div id="view-title" class="h-[100dvh] w-full flex flex-col justify-center items-center bg-slate-900 transition-opacity duration-500 z-50">
+        <div class="text-center animate-pulse">
+            <div class="text-6xl mb-4">🐉</div>
+            <h1 class="text-3xl font-extrabold tracking-widest text-emerald-400">GamiWord</h1>
+            <p class="text-xs text-slate-500 mt-2">育成 × 効率的英単語学習</p>
+        </div>
+    </div>
+
+    <!-- ================= メインアプリケーションコンテナ (縦1画面固定) ================= -->
+    <div id="main-app" class="hidden h-[100dvh] w-full max-w-md mx-auto flex flex-col justify-between overflow-hidden">
+        
+        <!-- ヘッダー (8dvh) -->
+        <header class="h-[8dvh] flex items-center justify-between border-b border-slate-800 px-4">
+            <div class="flex items-center space-x-1">
+                <span class="text-lg">🔥</span>
+                <span id="header-streak" class="font-bold text-sm text-amber-400">1 日</span>
+            </div>
+            <div id="header-mode-title" class="font-bold text-sm tracking-wide text-slate-300">単語演習</div>
+            <div class="flex items-center space-x-1">
+                <span id="header-score" class="font-bold text-sm text-emerald-400">0</span>
+                <span class="text-lg">🏆</span>
+            </div>
+        </header>
+
+        <!-- ================= 各ビューエリア (77dvh) ================= -->
+        <main class="h-[77dvh] overflow-hidden relative">
+
+            <!-- 2-A. 単語演習ビュー -->
+            <div id="view-learn" class="absolute inset-0 flex flex-col justify-between p-4 transition-transform duration-300">
+                <!-- コンボ・進捗 -->
+                <div class="h-6 flex justify-between items-center px-2">
+                    <span id="combo-badge" class="invisible text-amber-400 font-extrabold text-xs tracking-wider">
+                        ⚡ <span id="combo-count">0</span> COMBO!
+                    </span>
+                    <span class="text-xs text-slate-500">
+                        残り: <span id="remaining-count">0</span>語
+                    </span>
+                </div>
+
+                <!-- 3Dカード -->
+                <div id="word-card" class="perspective w-full h-3/5 my-2">
+                    <div id="card-inner" class="transform-style-3d transition-transform duration-300 w-full h-full relative rounded-2xl bg-slate-900 border-2 border-slate-800 shadow-xl flex items-center justify-center">
+                        <!-- 表面 (英語) -->
+                        <div class="backface-hidden absolute inset-0 flex flex-col justify-between p-6 items-center">
+                            <div class="w-full flex justify-between items-center text-[10px] text-slate-500">
+                                <span>タップで意味を表示</span>
+                                <button id="btn-speak" class="p-2 text-slate-400 hover:text-slate-200">🔊</button>
+                            </div>
+                            <div class="text-center">
+                                <h2 id="word-english" class="text-3xl font-extrabold tracking-wide text-white">...</h2>
+                                <p id="word-phonetic" class="text-xs text-slate-500 mt-1">/--/</p>
+                            </div>
+                            <div class="h-4"></div>
+                        </div>
+                        <!-- 裏面 (日本語) -->
+                        <div class="backface-hidden rotate-y-180 absolute inset-0 flex flex-col justify-between p-6 items-center bg-slate-900">
+                            <div class="text-[10px] text-slate-500 w-full">意味</div>
+                            <div class="text-center px-2">
+                                <h3 id="word-japanese" class="text-xl font-bold text-emerald-400 mb-2">...</h3>
+                                <p id="word-example" class="text-xs text-slate-400 leading-relaxed max-h-20 overflow-y-auto">...</p>
+                            </div>
+                            <div class="text-[10px] text-slate-500">タップで表面に戻る</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 判定ボタン -->
+                <div class="h-1/5 grid grid-cols-2 gap-4 items-center">
+                    <button id="btn-forget" class="bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800 py-3 rounded-xl font-bold text-sm active:scale-95 transition">
+                        ❌ 忘れた (Again)
+                    </button>
+                    <button id="btn-remember" class="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-800 py-3 rounded-xl font-bold text-sm active:scale-95 transition">
+                        ⭕ 覚えた (Good)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2-B. 図鑑ビュー -->
+            <div id="view-dict" class="absolute inset-0 hidden flex flex-col p-4 transition-transform duration-300">
+                <p class="text-xs text-slate-500 mb-2">出会った単語の記憶強度（復習優先度）</p>
+                <div id="dict-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    <!-- JSで動的に単語を生成 -->
+                </div>
+            </div>
+
+            <!-- 2-C. ペットビュー -->
+            <div id="view-pet" class="absolute inset-0 hidden flex flex-col justify-between p-4 transition-transform duration-300">
+                <!-- ステータス表示 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span id="pet-level-name" class="font-extrabold text-sm text-slate-200">Lv.1 タマゴ</span>
+                        <span id="pet-xp-text" class="text-xs text-slate-400">0 / 100 XP</span>
+                    </div>
+                    <!-- EXPバー -->
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div id="pet-xp-bar" class="bg-emerald-500 h-full w-[0%] transition-all duration-300"></div>
+                    </div>
+                    <!-- 満腹度バー -->
+                    <div class="flex justify-between items-center text-xs pt-1">
+                        <span class="text-slate-400">満腹度</span>
+                        <span id="pet-satiety-text" class="text-amber-400 font-bold">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div id="pet-satiety-bar" class="bg-amber-500 h-full w-[100%] transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <!-- ペットアニメーションエリア -->
+                <div class="flex-1 flex flex-col justify-center items-center relative">
+                    <div id="pet-avatar" class="text-7xl p-4 bg-slate-900 rounded-full border border-slate-800 animate-idle">🥚</div>
+                    <p id="pet-bubble" class="mt-4 bg-slate-900 border border-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl relative max-w-xs text-center">
+                        「トントン...中から音がするピ」
+                    </p>
+                </div>
+
+                <!-- 育成アクションエリア -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
+                    <div class="text-xs">
+                        <span class="text-slate-400">所持おやつ:</span>
+                        <span id="pet-food-count" class="font-bold text-amber-400 text-sm ml-1">🍪 0 個</span>
+                    </div>
+                    <button id="btn-feed" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs active:scale-95 transition">
+                        🍪 おやつをあげる
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ================= 3. タブナビゲーション (15dvh) ================= -->
+        <nav class="h-[15dvh] border-t border-slate-800 grid grid-cols-3 bg-slate-900/50 backdrop-blur-md">
+            <button id="tab-learn" class="flex flex-col justify-center items-center text-emerald-400 transition-colors">
+                <span class="text-lg mb-1">📖</span>
+                <span class="text-[10px] font-bold">単語演習</span>
+            </button>
+            <button id="tab-dict" class="flex flex-col justify-center items-center text-slate-500 hover:text-slate-300 transition-colors">
+                <span class="text-lg mb-1">📊</span>
+                <span class="text-[10px] font-bold">データ図鑑</span>
+            </button>
+            <button id="tab-pet" class="flex flex-col justify-center items-center text-slate-500 hover:text-slate-300 transition-colors">
+                <span class="text-lg mb-1">🐉</span>
+                <span class="text-[10px] font-bold">ペット育成</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- 単語詳細ダイアログ (図鑑用) -->
+    <div id="dict-modal" class="hidden fixed inset-0 bg-black/70 flex justify-center items-center p-6 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 relative">
+            <button id="btn-close-modal" class="absolute top-3 right-3 text-slate-500 hover:text-slate-300 text-sm">✕</button>
+            <h4 id="modal-english" class="text-2xl font-bold text-white">English</h4>
+            <p id="modal-phonetic" class="text-xs text-slate-500 mb-3">/phonetic/</p>
+            <hr class="border-slate-800 mb-3">
+            <p id="modal-japanese" class="text-sm font-semibold text-emerald-400 mb-2">日本語訳</p>
+            <p id="modal-example" class="text-xs text-slate-400 leading-relaxed mb-4">例文がここに表示されます。</p>
+            <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 bg-slate-950 p-3 rounded-lg">
+                <div>正答率: <span id="modal-accuracy" class="text-slate-300">0%</span></div>
+                <div>学習回数: <span id="modal-count" class="text-slate-300">0回</span></div>
+                <div class="col-span-2 mt-1">記憶強度: <span id="modal-strength" class="text-amber-400 font-bold">100%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 分割ファイル読み込み -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
