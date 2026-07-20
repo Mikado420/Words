@@ -5,7 +5,7 @@
 window.PetSystem = (() => {
     const PET_STAGES = [
         { minLevel: 1, maxLevel: 2, avatar: '🥚', name: 'タマゴ', messages: ["トントン...中から音がするピ", "動かすと少し揺れるピ！"] },
-        { minLevel: 3, maxLevel: 5, avatar: '🐣', name: 'ひよこ（殻つき）', messages: ["パカッ！生まれたピ！", "もっと単語を食べたいピ！", "おやつはいつでも大歓迎だピ！"] },
+        { minLevel: 3, maxLevel: 5, avatar: '🐣', name: 'ひよこ（殻つき）', messages: ["パカッ！生まれたピ！", "もっと単語を食べたいピ！", "おやつはいつも大歓迎だピ！"] },
         { minLevel: 6, maxLevel: 9, avatar: '🐥', name: 'ひよこ', messages: ["羽がフサフサしてきたピ！", "頑張る主人が大好きだピ！", "たくさん正解しておやつをくれピ！"] },
         { minLevel: 10, maxLevel: 999, avatar: '🐉', name: 'ミニドラゴン', messages: ["ウオオオン！強くなったピ！", "完全にマスターしたピ！", "もう教えることは何もないピ！"] }
     ];
@@ -31,7 +31,6 @@ window.PetSystem = (() => {
         },
 
         updateUI: function(state) {
-            // 要素未取得の時のみ遅延バインドを実行
             if (!dom.levelName) bindDOM();
 
             const stage = PET_STAGES.find(s => state.level >= s.minLevel && state.level <= s.maxLevel) || PET_STAGES[0];
