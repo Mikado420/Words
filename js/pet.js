@@ -1,5 +1,5 @@
 /**
- * GamiWord Pro - ペット育成システムモジュール
+ * GamiWord Pro - ペット育成システムモジュール (pet.js)
  */
 
 window.PetSystem = (() => {
