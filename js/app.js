@@ -178,6 +178,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
                 },
                 body: JSON.stringify({
                     model: 'gpt-4o-mini',
+                    response_format: { type: "json_object" }, // json_object指定で出力を安定化
                     messages: [{ role: 'user', content: prompt }],
                     temperature: 0.4
                 })
@@ -185,9 +186,16 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
 
             if (!response.ok) throw new Error();
             const data = await response.json();
-            const parsed = JSON.parse(data.choices[0].message.content.trim());
+            
+            // マークダウン装飾や不要な空白が混入した場合のトリミングフィルター
+            const rawContent = data.choices[0].message.content.trim();
+            const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("JSON形式の不整合");
+            
+            const parsed = JSON.parse(jsonMatch[0]);
             return parsed.choices;
         } catch (e) {
+            console.warn("API連携でエラーが発生したため、ローカル生成を行いますピ。:", e);
             return generateChoicesLocal(word);
         }
     }
@@ -579,7 +587,6 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             elements.tagDerivative.classList.add('hidden');
         }
 
-        // 4択
         elements.choicesContainer.innerHTML = '';
         const shuffled = [...current.choices].sort(() => Math.random() - 0.5);
         shuffled.forEach((choice, index) => {
@@ -717,7 +724,6 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         elements.modalPhonetic.textContent = word.phonetic;
         elements.modalJapanese.textContent = word.japanese;
         
-        // 英文 ➔ 和訳の順番で表示
         elements.modalHintEng.textContent = word.exampleEng || word.english;
         elements.modalHintJap.textContent = word.exampleJap || `(訳: ${word.japanese})`;
 
@@ -804,7 +810,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         elements.btnBackToFolders.addEventListener('click', () => showTab('learn'));
         elements.btnStartSession.addEventListener('click', startPractice);
 
-        // クイズ中のヒントタップ制御（英文→和訳の段階的表示）
+        // クイズ中のヒントタップ
         elements.wordQuestionCard.addEventListener('click', (e) => {
             if (e.target.closest('#btn-speak')) return;
             const current = state.practiceWords[state.currentCardIndex];
