@@ -1,0 +1,62 @@
+/* 画面を引っ張ってリフレッシュするのを防ぐ(モバイルWeb必須) */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* 3Dカードフリップ */
+.perspective {
+    perspective: 1000px;
+}
+.transform-style-3d {
+    transform-style: preserve-3d;
+}
+.backface-hidden {
+    backface-visibility: hidden;
+}
+.rotate-y-180 {
+    transform: rotateY(180deg);
+}
+
+/* スクロールバーの非表示・スタイライズ */
+::-webkit-scrollbar {
+    width: 4px;
+}
+::-webkit-scrollbar-track {
+    background: #020617;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 9999px;
+}
+
+/* ペットのアイドルアニメーション（ピコピコ感のある上下の動き） */
+@keyframes idle {
+    0%, 100% {
+        transform: translateY(0) scaleY(1);
+    }
+    50% {
+        transform: translateY(-8px) scaleY(0.95);
+    }
+}
+.animate-idle {
+    animation: idle 2s infinite ease-in-out;
+}
+
+/* エサを与えた時の喜び跳ねアニメーション */
+@keyframes happy {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    30% {
+        transform: translateY(-20px) scale(1.1);
+    }
+    50% {
+        transform: translateY(0) scale(0.9);
+    }
+    80% {
+        transform: translateY(-8px) scale(1.05);
+    }
+}
+.animate-happy {
+    animation: happy 0.8s ease-in-out;
+}
