@@ -1,6 +1,5 @@
 /**
  * GamiWord Pro - システム英単語 Ch.1 全174語 完全データ
- * 見出し語、派生語、および「英文→和訳」ミニマルフレーズ、事前定義4択ひっかけ選択肢を全網羅
  */
 const SYSTEM_WORDS_PRESET = [
   {id:'sys_1',english:'follow',phonetic:'/ˈfɑːloʊ/',japanese:'～の後に続く、従う',exampleEng:'follow her advice',exampleJap:'彼女の助言に従う',derivatives:[{english:'following',partOfSpeech:'形',japanese:'次の、以下のような'}],choices:[{text:'～の後に続く、従う',isCorrect:true},{text:'～を矢のように放つ',isCorrect:false,type:'spelling'},{text:'～を不必要に繰り返す',isCorrect:false,type:'nuance'},{text:'～を不当に非難する',isCorrect:false,type:'distractor'}]},
@@ -19,8 +18,7 @@ const SYSTEM_WORDS_PRESET = [
   {id:'sys_14',english:'offer',phonetic:'/ˈɔːfər/',japanese:'～を申し出る、与える',exampleEng:'offer help to the poor',exampleJap:'貧しい人に援助を申し出る',choices:[{text:'～を申し出る、与える',isCorrect:true},{text:'～に苦痛を与える',isCorrect:false,type:'spelling'},{text:'～を無理やり押し付ける',isCorrect:false,type:'nuance'},{text:'～を向上させる',isCorrect:false,type:'distractor'}]},
   {id:'sys_15',english:'realize',phonetic:'/ˈriːəlaɪz/',japanese:'～を悟る、気づく、実現する',exampleEng:'realize the error',exampleJap:'まちがいを悟る',derivatives:[{english:'realization',partOfSpeech:'名',japanese:'認識、実現'}],choices:[{text:'～を悟る、気づく、実現する',isCorrect:true},{text:'～を解放する',isCorrect:false,type:'spelling'},{text:'～をなんとなく直感する',isCorrect:false,type:'nuance'},{text:'～を認める',isCorrect:false,type:'distractor'}]},
   
-  // 以降の単語については、容量対策・初期起動時に choices 欠損を検知し、
-  // 自動ハズレ生成エンジン（疑似AI / OpenAI API）が動的に4択化を行い、完全な状態でLocalStorageへ永続化します。
+  // 16〜174：起動時に疑似AI、あるいはOpenAI API経由で自動生成されて永続化されます。
   {id:'sys_16',english:'suggest',phonetic:'/səɡˈdʒest/',japanese:'～と提案する、ほのめかす',exampleEng:'suggest a new way',exampleJap:'新しいやり方を提案する',derivatives:[{english:'suggestion',partOfSpeech:'名',japanese:'提案、暗示'}]},
   {id:'sys_17',english:'require',phonetic:'/rɪˈkwaɪər/',japanese:'～を必要とする、要求する',exampleEng:'require more attention',exampleJap:'もっと注意を必要とする',derivatives:[{english:'requirement',partOfSpeech:'名',japanese:'要求されるもの、必要条件'}]},
   {id:'sys_18',english:'worry',phonetic:'/ˈwɜːri/',japanese:'心配する、～に心配させる',exampleEng:'worry about money',exampleJap:'お金のことを心配する',derivatives:[{english:'worried',partOfSpeech:'形',japanese:'心配している'}]},
@@ -51,6 +49,7 @@ const SYSTEM_WORDS_PRESET = [
   {id:'sys_43',english:'prove',phonetic:'/pruːv/',japanese:'～だとわかる、証明する',exampleEng:'prove to be true',exampleJap:'本当だとわかる',derivatives:[{english:'proof',partOfSpeech:'名',japanese:'証拠、証明'}]},
   {id:'sys_44',english:'treat',phonetic:'/triːt/',japanese:'～をあつかう、手当てする、おごる',exampleEng:'treat him like a child',exampleJap:'子供みたいに彼をあつかう',derivatives:[{english:'treatment',partOfSpeech:'名',japanese:'取り扱い、治療'}]},
   {id:'sys_45',english:'establish',phonetic:'/ɪˈstæblɪʃ/',japanese:'～を設立する、創立する、確定する',exampleEng:'establish a company',exampleJap:'会社を設立する',derivatives:[{english:'establishment',partOfSpeech:'名',japanese:'施設、組織、設立'}]},
+  {id:'sys_46',english:'relate',phonetic:'/rɪˈleɪt/',japanese:'関係がある、関係づける',exampleEng:'stress-related illness',exampleJap:'ストレスと関係のある病気',derivatives:[{english:'relation',partOfSpeech:'名',japanese:'関係'},{english:'relationship',partOfSpeech:'名',japanese:'関係'}]},
   {id:'sys_47',english:'compare',phonetic:'/kəmˈpeər/',japanese:'～を比較する、たとえる',exampleEng:'compare Japan with China',exampleJap:'日本と中国を比較する',derivatives:[{english:'comparison',partOfSpeech:'名',japanese:'比較、たとえ'}]},
   {id:'sys_48',english:'spread',phonetic:'/spred/',japanese:'～を広げる、広がる',exampleEng:'spread the tablecloth',exampleJap:'テーブルクロスを広げる'},
   {id:'sys_49',english:'refer',phonetic:'/rɪˈfɜːr/',japanese:'～を指し示す、言及する、参照する',exampleEng:'What does this word refer to?',exampleJap:'この語は何を指示するか',derivatives:[{english:'reference',partOfSpeech:'名',japanese:'言及、参照'}]},
