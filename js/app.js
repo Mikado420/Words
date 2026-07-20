@@ -1,5 +1,5 @@
 /**
- * GamiWord Pro - 統合管理・セキュアAPI遷移制御エンジン
+ * GamiWord Pro - 統合管理・確実な画面遷移・非同期API ＆ 個別・一括データ削除機能
  */
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -55,7 +55,8 @@ window.addEventListener('DOMContentLoaded', () => {
         inputWordEng: document.getElementById('input-word-eng'),
         inputWordPhonetic: document.getElementById('input-word-phonetic'),
         inputWordJap: document.getElementById('input-word-jap'),
-        inputWordHint: document.getElementById('input-word-hint'),
+        inputWordHintEng: document.getElementById('input-word-hint-eng'),
+        inputWordHintJap: document.getElementById('input-word-hint-jap'),
         inputWordExample: document.getElementById('input-word-example'),
         btnCancelAddWord: document.getElementById('btn-cancel-add-word'),
         btnSaveAddWord: document.getElementById('btn-save-add-word'),
@@ -67,7 +68,8 @@ window.addEventListener('DOMContentLoaded', () => {
         wordQuestionCard: document.getElementById('word-question-card'),
         wordEnglish: document.getElementById('word-english'),
         wordPhonetic: document.getElementById('word-phonetic'),
-        wordHint: document.getElementById('word-hint'),
+        wordHintEng: document.getElementById('word-hint-eng'),
+        wordHintJap: document.getElementById('word-hint-jap'),
         cardHintNotice: document.getElementById('card-hint-notice'),
         tagDerivative: document.getElementById('tag-derivative'),
         btnSpeak: document.getElementById('btn-speak'),
@@ -84,8 +86,8 @@ window.addEventListener('DOMContentLoaded', () => {
         inputApiKey: document.getElementById('input-api-key'),
         btnCancelSettings: document.getElementById('btn-cancel-settings'),
         btnSaveSettings: document.getElementById('btn-save-settings'),
+        btnAllReset: document.getElementById('btn-all-reset'), // 一括リセット
 
-        // セキュア初期モーダル
         modalInitialApi: document.getElementById('modal-initial-api'),
         inputInitialKey: document.getElementById('input-initial-key'),
         btnSaveInitialKey: document.getElementById('btn-save-initial-key'),
@@ -95,13 +97,15 @@ window.addEventListener('DOMContentLoaded', () => {
         modalEnglish: document.getElementById('modal-english'),
         modalPhonetic: document.getElementById('modal-phonetic'),
         modalJapanese: document.getElementById('modal-japanese'),
+        modalHintEng: document.getElementById('modal-hint-eng'),
+        modalHintJap: document.getElementById('modal-hint-jap'),
         modalExample: document.getElementById('modal-example'),
         modalAccuracy: document.getElementById('modal-accuracy'),
         modalCount: document.getElementById('modal-count'),
         modalStrength: document.getElementById('modal-strength')
     };
 
-    // ================= 1. AI API連携ロジック ＆ ひっかけ選択肢生成 =================
+    // ================= 1. AI API連携ロジック ＆ 動的ハズレ生成 =================
     
     function getApiKey() {
         return localStorage.getItem('gamiword_api_key');
@@ -154,8 +158,8 @@ window.addEventListener('DOMContentLoaded', () => {
         const prompt = `
 JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択クイズの選択肢を出力してください。
 正解(isCorrect: true)は、必ず"${word.japanese}"。
-不正解(isCorrect: false)は、スペル酷似、意味類似、他動詞の3パターンを構築してください。
-装飾無しのプレーンJSONのみを返却。
+不正解(isCorrect: false)は、スペル酷似、意味類似、他動詞の3パターンを構築。
+マークダウン装飾無しのプレーンJSONのみを返却。
 {
   "choices": [
     {"text": "${word.japanese}", "isCorrect": true},
@@ -198,9 +202,9 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         }
     }
 
-    // ================= 2. 初期化 ＆ セキュリティ遷移シーケンス =================
+    // ================= 2. 初期化 ＆ 画面遷移シーケンス =================
     function init() {
-        const saved = localStorage.getItem('gamiword_secure_save');
+        const saved = localStorage.getItem('gamiword_secure_v4');
         if (saved) {
             try {
                 state = { ...state, ...JSON.parse(saved) };
@@ -209,10 +213,12 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             }
         }
 
+        // 統合DBの構築
         if (!state.words || state.words.length === 0) {
             state.words = JSON.parse(JSON.stringify(SYSTEM_WORDS_PRESET));
         }
 
+        // フォルダの初期設定
         if (!state.folders || state.folders.length === 0) {
             state.folders = JSON.parse(JSON.stringify(DEFAULT_FOLDERS));
         }
@@ -231,7 +237,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         updateAIStatusUI();
         setupEvents();
 
-        // 【セキュア画面遷移フロー】
+        // 確実な画面遷移
         setTimeout(() => {
             if (elements.viewTitle) {
                 elements.viewTitle.classList.add('opacity-0');
@@ -240,13 +246,11 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
                     
                     const apiKeyExists = getApiKey();
                     if (apiKeyExists) {
-                        // A: キーがある場合は通常起動
                         if (elements.mainApp) {
                             elements.mainApp.classList.remove('hidden');
                             processGenerationQueue();
                         }
                     } else {
-                        // B: キーがない場合はセキュリティロック（初回登録モーダル強制表示）
                         if (elements.modalInitialApi) {
                             elements.modalInitialApi.classList.remove('hidden');
                         }
@@ -257,7 +261,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
     }
 
     function saveState() {
-        localStorage.setItem('gamiword_secure_save', JSON.stringify({
+        localStorage.setItem('gamiword_secure_v4', JSON.stringify({
             streak: state.streak,
             score: state.score,
             combo: state.combo,
@@ -272,7 +276,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
 
     function updateStreak() {
         const today = new Date().toDateString();
-        const lastActive = localStorage.getItem('gamiword_secure_active');
+        const lastActive = localStorage.getItem('gamiword_secure_v4_active');
         if (lastActive) {
             const diff = Math.ceil(Math.abs(new Date(today) - new Date(lastActive)) / (1000 * 60 * 60 * 24));
             if (diff === 1) state.streak += 1;
@@ -280,7 +284,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         } else {
             state.streak = 1;
         }
-        localStorage.setItem('gamiword_secure_active', today);
+        localStorage.setItem('gamiword_secure_v4_active', today);
     }
 
     function renderHeader() {
@@ -329,7 +333,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         }
     }
 
-    // ================= フォルダ管理 ＆ 単語追加 =================
+    // ================= フォルダ管理 ＆ 確実なデータ個別削除 =================
     function renderFolderList() {
         if (!elements.folderContainer) return;
         elements.folderContainer.innerHTML = '';
@@ -355,6 +359,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             elements.folderContainer.appendChild(div);
         });
 
+        // フォルダ個別削除ボタンの確実な連動
         elements.folderContainer.querySelectorAll('.btn-delete-folder').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -450,7 +455,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         });
     }
 
-    function addWordToFolder(eng, pho, jap, hintText, ex) {
+    function addWordToFolder(eng, pho, jap, hintEng, hintJap, ex) {
         if (!eng.trim() || !jap.trim()) return;
         const wordId = 'word_' + Date.now();
         const newWord = {
@@ -458,7 +463,8 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             english: eng.trim(),
             phonetic: pho.trim() ? `/${pho.trim()}/` : '/--/',
             japanese: jap.trim(),
-            hint: hintText.trim() || `${eng.trim()}を答えよ`,
+            exampleEng: hintEng.trim() || `${eng.trim()}`,
+            exampleJap: hintJap.trim() || `(訳: ${jap.trim()})`,
             example: ex.trim() || '例文なし',
             correctCount: 0,
             incorrectCount: 0,
@@ -475,7 +481,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         saveState();
         renderFolderWordList();
         elements.modalAddWord.classList.add('hidden');
-        triggerToast("単語を追加したピ！");
+        triggerToast("単語を追加しましたピ！");
         processGenerationQueue();
     }
 
@@ -485,9 +491,10 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         state.words = state.words.filter(w => w.id !== wordId);
         saveState();
         renderFolderWordList();
+        triggerToast("単語を削除しました。");
     }
 
-    // ================= 4択演習システム =================
+    // ================= 4択演習システム ＆ 英文→和訳順表示 =================
     function startPractice() {
         const folder = state.folders.find(f => f.id === state.activeFolderId);
         if (!folder) return;
@@ -511,7 +518,8 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
                     english: word.english,
                     phonetic: word.phonetic,
                     japanese: word.japanese,
-                    hint: word.hint,
+                    exampleEng: word.exampleEng || word.english,
+                    exampleJap: word.exampleJap || word.japanese,
                     choices: word.choices || generateChoicesLocal(word),
                     isDerivative: false,
                     parentWord: word
@@ -524,7 +532,8 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
                         english: `${deriv.english} (${deriv.partOfSpeech})`,
                         phonetic: `/derivative/`,
                         japanese: deriv.japanese,
-                        hint: `【派生語】 ${word.english}（${word.japanese}）の関連語`,
+                        exampleEng: `【派生語】 ${word.english} (${deriv.english})`,
+                        exampleJap: `元: ${word.japanese} (${deriv.japanese})`,
                         choices: generateChoicesLocal({ english: deriv.english, japanese: deriv.japanese }),
                         isDerivative: true,
                         parentWord: word
@@ -560,8 +569,9 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         elements.wordEnglish.textContent = current.english;
         elements.wordPhonetic.textContent = current.phonetic;
         state.isHintShown = false;
-        elements.wordHint.classList.add('hidden');
-        elements.cardHintNotice.textContent = "タップしてヒントを表示";
+        elements.wordHintEng.classList.add('hidden');
+        elements.wordHintJap.classList.add('hidden');
+        elements.cardHintNotice.textContent = "タップしてミニフレーズを表示";
 
         if (current.isDerivative) {
             elements.tagDerivative.classList.remove('hidden');
@@ -569,6 +579,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             elements.tagDerivative.classList.add('hidden');
         }
 
+        // 4択
         elements.choicesContainer.innerHTML = '';
         const shuffled = [...current.choices].sort(() => Math.random() - 0.5);
         shuffled.forEach((choice, index) => {
@@ -662,7 +673,7 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         }
     }
 
-    // ================= データ図鑑 ＆ その他UI =================
+    // ================= データ図鑑 ＆ 一括初期化リセット =================
     function renderDict() {
         if (!elements.dictList) return;
         elements.dictList.innerHTML = '';
@@ -705,11 +716,28 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         elements.modalEnglish.textContent = word.english;
         elements.modalPhonetic.textContent = word.phonetic;
         elements.modalJapanese.textContent = word.japanese;
-        elements.modalExample.textContent = word.example;
+        
+        // 英文 ➔ 和訳の順番で表示
+        elements.modalHintEng.textContent = word.exampleEng || word.english;
+        elements.modalHintJap.textContent = word.exampleJap || `(訳: ${word.japanese})`;
+
+        elements.modalExample.textContent = word.example || "例文なし";
         elements.modalAccuracy.textContent = `${accuracy}%`;
         elements.modalCount.textContent = `${total}回`;
         elements.modalStrength.textContent = `${strength}%`;
         elements.dictModal.classList.remove('hidden');
+    }
+
+    // 学習データの一括完全削除（リセット）
+    function performFullReset() {
+        if (confirm("警告: 全ての学習データ、登録カスタムフォルダ、ペット育成の記録が一括ですべて初期化されます。本当によろしいですかピ？")) {
+            localStorage.removeItem('gamiword_secure_v4');
+            localStorage.removeItem('gamiword_secure_v4_active');
+            triggerToast("データを一括リセットしました。再起動します...");
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
     }
 
     function triggerToast(message) {
@@ -766,6 +794,9 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
             processGenerationQueue();
         });
 
+        // 一括リセット
+        elements.btnAllReset.addEventListener('click', performFullReset);
+
         elements.btnOpenCreateFolder.addEventListener('click', () => elements.modalCreateFolder.classList.remove('hidden'));
         elements.btnCancelFolder.addEventListener('click', () => elements.modalCreateFolder.classList.add('hidden'));
         elements.btnSaveFolder.addEventListener('click', () => createFolder(elements.inputFolderName.value));
@@ -773,11 +804,24 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
         elements.btnBackToFolders.addEventListener('click', () => showTab('learn'));
         elements.btnStartSession.addEventListener('click', startPractice);
 
+        // クイズ中のヒントタップ制御（英文→和訳の段階的表示）
         elements.wordQuestionCard.addEventListener('click', (e) => {
             if (e.target.closest('#btn-speak')) return;
+            const current = state.practiceWords[state.currentCardIndex];
+            if (!current) return;
+
             state.isHintShown = !state.isHintShown;
-            elements.wordHint.classList.toggle('hidden', !state.isHintShown);
-            elements.cardHintNotice.textContent = state.isHintShown ? "ヒント表示中" : "タップしてヒントを表示";
+            if (state.isHintShown) {
+                elements.wordHintEng.textContent = current.exampleEng || current.english;
+                elements.wordHintJap.textContent = current.exampleJap || "";
+                elements.wordHintEng.classList.remove('hidden');
+                elements.wordHintJap.classList.remove('hidden');
+                elements.cardHintNotice.textContent = "ヒント表示中";
+            } else {
+                elements.wordHintEng.classList.add('hidden');
+                elements.wordHintJap.classList.add('hidden');
+                elements.cardHintNotice.textContent = "タップしてミニフレーズを表示";
+            }
         });
         elements.btnExitPractice.addEventListener('click', () => showTab('learn'));
         elements.btnSpeak.addEventListener('click', speakCurrent);
@@ -789,7 +833,8 @@ JSON形式で、英語"${word.english}"、日本語"${word.japanese}"の4択ク�
                 elements.inputWordEng.value,
                 elements.inputWordPhonetic.value,
                 elements.inputWordJap.value,
-                elements.inputWordHint.value,
+                elements.inputWordHintEng.value,
+                elements.inputWordHintJap.value,
                 elements.inputWordExample.value
             );
         });
