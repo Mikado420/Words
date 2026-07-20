@@ -1,6 +1,6 @@
 /**
- * GamiWord Pro - システム英単語 Ch.1 データベース (chapter1.js)
- * 派生語（derivatives）を包含したオブジェクト構造
+ * GamiWord Pro - システム英単語 Ch.1 データベース
+ * 派生語（derivatives）を内包したオブジェクト構造
  */
 
 const SYSTEM_WORDS_PRESET = [
@@ -20,7 +20,7 @@ const SYSTEM_WORDS_PRESET = [
         english: 'consider', 
         phonetic: '/kənˈsɪdər/', 
         japanese: '～を考慮する、考える', 
-        hint: 'consider the problem seriously（問題を真剣に考える）', 
+        hint: 'consider the problem seriously（問題を考える）', 
         example: 'We should consider all options.',
         derivatives: [
             { english: 'consideration', partOfSpeech: '名', japanese: '考慮、思いやり' },
@@ -77,7 +77,7 @@ const SYSTEM_WORDS_PRESET = [
         english: 'provide', 
         phonetic: '/prəˈvaɪd/', 
         japanese: '～を供給する、与える', 
-        hint: 'provide him with information（彼に情報を与える）', 
+        hint: 'provide him with information（情報を与える）', 
         example: 'The course provides basic skills.',
         derivatives: [
             { english: 'provision', partOfSpeech: '名', japanese: '供給、用意' }
@@ -99,7 +99,7 @@ const SYSTEM_WORDS_PRESET = [
         english: 'include', 
         phonetic: '/ɪnˈkluːd/', 
         japanese: '～を含む、含める', 
-        hint: 'includes his name（彼の名前を含む）', 
+        hint: 'includes his name（名前を含む）', 
         example: 'The bill includes service charges.',
         derivatives: [
             { english: 'including', partOfSpeech: '前', japanese: '～を含めて' }
@@ -147,7 +147,7 @@ const SYSTEM_WORDS_PRESET = [
         id: 'sys_14', 
         english: 'offer', 
         phonetic: '/ˈɔːfər/', 
-        japanese: '～を申し出る、与える', 
+        japanese: '～を申し出る、給する、与える', 
         hint: 'offer help to the poor（援助を申し出る）', 
         example: 'They offered us a warm welcome.'
     },
@@ -156,7 +156,7 @@ const SYSTEM_WORDS_PRESET = [
         english: 'realize', 
         phonetic: '/ˈriːəlaɪz/', 
         japanese: '～を悟る、気づく、実現する', 
-        hint: 'realize the error（まちがいを悟る）', 
+        hint: 'realize the error（間違いを悟る）', 
         example: 'I finally realized my dream.',
         derivatives: [
             { english: 'realization', partOfSpeech: '名', japanese: '認識、実現' }
@@ -164,12 +164,12 @@ const SYSTEM_WORDS_PRESET = [
     }
 ];
 
-// 初期フォルダ設定
+// 初期フォルダ定義
 const DEFAULT_FOLDERS = [
     {
         id: 'folder_preset_ch1',
         name: 'システム英単語 Ch.1 🔒',
         isPreset: true,
-        wordIds: [] // app.js起動時に全IDを紐付け
+        wordIds: [] // 起動時app.jsにて動的バインド
     }
 ];
