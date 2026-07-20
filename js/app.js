@@ -1,5 +1,5 @@
 /**
- * GamiWord AI - 4択 & 疑似AIひっかけ生成ロジックエンジン
+ * GamiWord Pro - コントロール・ゲーム・疑似AIハズレ自動生成・全画面UI制御エンジン
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,8 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
         foods: 0,
         satiety: 100,
         
+        // フォルダ & 統合英単語データベース（セーブ対象。ここに進捗とChoices情報が完全保存されます）
         folders: [],
-        customWords: [],
+        words: [], 
+        customWords: [], // 下位互換とカスタム追加の一時退避用
         
         activeFolderId: null,
         practiceWords: [], 
@@ -98,28 +100,44 @@ document.addEventListener('DOMContentLoaded', () => {
         modalStrength: document.getElementById('modal-strength')
     };
 
-    // ================= 1. AIハズレ自動生成・保存ロジック =================
-    // スペル酷似およびニュアンス類似判定を用いた疑似AI生成エンジン
+    // ================= 1. デバッグ対策：AIハズレ自動選択肢生成 ＆ 永続化 =================
+    
+    // 他の単語の意味からディストラクターを安全に抽出
+    function getRandomDistractorMeaning(currentWordEnglish) {
+        // ロード済みの統合配列から検索
+        const pool = state.words && state.words.length > 5 ? state.words : SYSTEM_WORDS_PRESET;
+        const validWords = pool.filter(w => w.english.toLowerCase() !== currentWordEnglish.toLowerCase());
+        if (validWords.length === 0) return "～を分析する";
+        const randomWord = validWords[Math.floor(Math.random() * validWords.length)];
+        return randomWord.japanese || "～を処理する";
+    }
+
+    // 疑似AIハズレ自動生成
     function runAIFakeGenerator(word) {
+        if (!word) return;
         if (word.choices && word.choices.length === 4) return; // 既に生成済み
 
-        const eng = word.english.toLowerCase();
-        const jap = word.japanese;
+        const eng = word.english ? word.english.toLowerCase() : "";
+        const jap = word.japanese || "～を意味する";
 
-        // ルール1: スペル酷似の疑似生成（実在単語との混同）
-        let spellingFake = "～を誤って同一視する";
-        if (eng.includes('allow')) spellingFake = "～を矢のように放つ"; // arrow
-        else if (eng.includes('expect')) spellingFake = "～を除外する、除く"; // except
-        else if (eng.includes('decide')) spellingFake = "～をだます、欺く"; // deceive
-        else if (eng.includes('develop')) spellingFake = "～を包む、封入する"; // envelope
-        else if (eng.includes('realize')) spellingFake = "～を解放する、放つ"; // release
-        else if (eng.includes('force')) spellingFake = "～を偽造する"; // forge
+        // ルール1: スペル酷似型の擬似でっち上げ
+        let spellingFake = "～を誤解する、見誤る";
+        if (eng.includes('allow')) spellingFake = "～を矢のように放つ"; 
+        else if (eng.includes('expect')) spellingFake = "～を除外する、除く"; 
+        else if (eng.includes('decide')) spellingFake = "～をだます、欺く"; 
+        else if (eng.includes('develop')) spellingFake = "～を包む、封入する"; 
+        else if (eng.includes('realize')) spellingFake = "～を解放する、放つ"; 
+        else if (eng.includes('force')) spellingFake = "～を偽造する"; 
+        else if (eng.includes('reach')) spellingFake = "～を教える、教え示す"; // teach
+        else if (eng.includes('refuse')) spellingFake = "～を再び注ぐ"; // re-fuse
+        else if (eng.includes('suffer')) spellingFake = "～を提供する、差し出す"; // offer
         else {
-            // 一般カスタム単語用: スペル末尾を弄った適当な意味
-            spellingFake = `～を段階的に${jap.replace(/～|する/g, '')}する`;
+            // 文字末尾をいじった適当な誤訳を生成
+            const baseJap = jap.replace(/～|する/g, '');
+            spellingFake = `～を段階的に${baseJap}する`;
         }
 
-        // ルール2: ニュアンス類似（核心的な誤訳・翻訳揺れ）
+        // ルール2: ニュアンス類似
         let nuanceFake = `～を一時的に${jap.replace(/～|する/g, '')}する`;
         if (jap.includes('決定') || jap.includes('決意')) {
             nuanceFake = "～を何となく決める、成り行きに任せる";
@@ -127,13 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
             nuanceFake = "～を不本意ながら目をつぶる";
         } else if (jap.includes('予期') || jap.includes('期待')) {
             nuanceFake = "～を過剰に心配して待つ";
+        } else if (jap.includes('向上') || jap.includes('改善')) {
+            nuanceFake = "～を一時的に綺麗にする";
         }
 
-        // ルール3: ディストラクター（関係のない品詞が同じ動詞）
-        const randomVerbPool = ["～を破壊する", "～を拒絶する", "～に反対する", "～を推薦する", "～を調査する"];
-        const distractorFake = randomVerbPool[Math.floor(Math.random() * randomVerbPool.length)];
+        // ルール3: データベースの他の単語から動的抽出（ディストラクター）
+        const distractorFake = getRandomDistractorMeaning(word.english);
 
-        // 4択構造の作成
         word.choices = [
             { text: jap, isCorrect: true },
             { text: spellingFake, isCorrect: false, type: 'spelling' },
@@ -142,33 +160,44 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
     }
 
-    // すべての単語のchoicesの欠損を埋めて保存
+    // 全ての単語にハズレ選択肢をセットして永続化を確定
     function ensureAllWordsHaveChoices() {
-        // システム単語
-        SYSTEM_WORDS_PRESET.forEach(word => runAIFakeGenerator(word));
-        // ユーザーカスタム単語
-        state.customWords.forEach(word => runAIFakeGenerator(word));
+        if (state.words && state.words.length > 0) {
+            state.words.forEach(word => {
+                if (word) runAIFakeGenerator(word);
+            });
+        }
     }
 
-    // ================= 2. アプリ初期化 =================
+    // ================= 2. 初期化 ＆ セーブ・ロード処理 =================
     function init() {
-        const saved = localStorage.getItem('gamiword_ai_save');
+        const saved = localStorage.getItem('gamiword_pro_core_save');
         if (saved) {
             try {
                 state = { ...state, ...JSON.parse(saved) };
             } catch (e) {
-                console.error("データの破損を検知", e);
+                console.error("データの破損を検知。初期状態から再開します。", e);
             }
         }
         
-        if (!state.folders || state.folders.length === 0) {
-            state.folders = [...DEFAULT_FOLDERS];
-        }
-        if (!state.customWords) {
-            state.customWords = [];
+        // 統合単語DB wordsの初期化（これがすべての進捗・choicesを永続的に引き受ける）
+        if (!state.words || state.words.length === 0) {
+            // 定数（プリセット）のディープコピーを作成して保存（定数を直接汚染させない）
+            state.words = JSON.parse(JSON.stringify(SYSTEM_WORDS_PRESET));
         }
 
-        // choicesの整合性を担保
+        // フォルダデータの初期化・マッピング
+        if (!state.folders || state.folders.length === 0) {
+            state.folders = JSON.parse(JSON.stringify(DEFAULT_FOLDERS));
+        }
+
+        // プリセットフォルダに全174語のIDを紐付け
+        const presetFolder = state.folders.find(f => f.id === 'folder_preset_ch1');
+        if (presetFolder) {
+            presetFolder.wordIds = state.words.map(w => w.id);
+        }
+
+        // 動的な4択ハズレ選択肢生成
         ensureAllWordsHaveChoices();
         saveState();
 
@@ -179,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveState() {
-        localStorage.setItem('gamiword_ai_save', JSON.stringify({
+        localStorage.setItem('gamiword_pro_core_save', JSON.stringify({
             streak: state.streak,
             score: state.score,
             combo: state.combo,
@@ -188,14 +217,14 @@ document.addEventListener('DOMContentLoaded', () => {
             foods: state.foods,
             satiety: state.satiety,
             folders: state.folders,
-            customWords: state.customWords,
+            words: state.words, // 174語＋カスタム全てが永続保存
             lastActiveDate: new Date().toDateString()
         }));
     }
 
     function updateStreak() {
         const today = new Date().toDateString();
-        const lastActive = localStorage.getItem('gamiword_ai_last_active');
+        const lastActive = localStorage.getItem('gamiword_pro_core_last_active');
         if (lastActive) {
             const diff = Math.ceil(Math.abs(new Date(today) - new Date(lastActive)) / (1000 * 60 * 60 * 24));
             if (diff === 1) state.streak += 1;
@@ -203,12 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             state.streak = 1;
         }
-        localStorage.setItem('gamiword_ai_last_active', today);
+        localStorage.setItem('gamiword_pro_core_last_active', today);
     }
 
     function renderHeader() {
-        elements.headerStreak.textContent = `${state.streak} 日`;
-        elements.headerScore.textContent = state.score;
+        if (elements.headerStreak) elements.headerStreak.textContent = `${state.streak} 日`;
+        if (elements.headerScore) elements.headerScore.textContent = state.score;
     }
 
     // ================= 3. ビューマネージャー =================
@@ -219,21 +248,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function showTab(targetKey) {
-        elements.modalCreateFolder.classList.add('hidden');
-        elements.modalAddWord.classList.add('hidden');
-        elements.dictModal.classList.add('hidden');
+        // ダイアログをすべて閉じる
+        if (elements.modalCreateFolder) elements.modalCreateFolder.classList.add('hidden');
+        if (elements.modalAddWord) elements.modalAddWord.classList.add('hidden');
+        if (elements.dictModal) elements.dictModal.classList.add('hidden');
 
         Object.keys(tabs).forEach(key => {
             const tab = tabs[key];
-            if (key === targetKey) {
-                tab.view.classList.remove('hidden');
-                tab.btn.classList.remove('text-slate-500');
-                tab.btn.classList.add('text-emerald-400');
-                elements.headerModeTitle.textContent = tab.title;
-            } else {
-                tab.view.classList.add('hidden');
-                tab.btn.classList.add('text-slate-500');
-                tab.btn.classList.remove('text-emerald-400');
+            if (tab.view && tab.btn) {
+                if (key === targetKey) {
+                    tab.view.classList.remove('hidden');
+                    tab.btn.classList.remove('text-slate-500');
+                    tab.btn.classList.add('text-emerald-400');
+                    elements.headerModeTitle.textContent = tab.title;
+                } else {
+                    tab.view.classList.add('hidden');
+                    tab.btn.classList.add('text-slate-500');
+                    tab.btn.classList.remove('text-emerald-400');
+                }
             }
         });
 
@@ -252,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ================= 4. フォルダ機能ロジック =================
     function renderFolderList() {
+        if (!elements.folderContainer) return;
         elements.folderContainer.innerHTML = '';
         state.folders.forEach(folder => {
             const div = document.createElement('div');
@@ -278,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.folderContainer.appendChild(div);
         });
 
+        // 削除ステップ判定（長押し代替：1タップ目で警告、2タップ目で削除）
         elements.folderContainer.querySelectorAll('.btn-delete-folder').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -313,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFolderList();
         elements.modalCreateFolder.classList.add('hidden');
         elements.inputFolderName.value = '';
-        triggerToast("フォルダを作成しましたピ！");
+        triggerToast("フォルダを作成したピ！");
     }
 
     function deleteFolder(id) {
@@ -321,16 +355,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (folder && folder.isPreset) return;
         
         if (folder) {
-            state.customWords = state.customWords.filter(w => !folder.wordIds.includes(w.id));
+            // 削除したフォルダに含まれていたカスタム単語実体も連動して削除
+            state.words = state.words.filter(w => !folder.wordIds.includes(w.id));
         }
 
         state.folders = state.folders.filter(f => f.id !== id);
         saveState();
         renderFolderList();
-        triggerToast("フォルダを削除しました。");
+        triggerToast("フォルダを削除したピ。");
     }
 
-    // ================= 5. フォルダ詳細 ＆ 単語追加 =================
+    // ================= 5. フォルダ詳細 ＆ 新規単語追加 =================
     function openFolderDetail(folderId) {
         state.activeFolderId = folderId;
         const folder = state.folders.find(f => f.id === folderId);
@@ -351,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderFolderWordList() {
+        if (!elements.detailWordList) return;
         elements.detailWordList.innerHTML = '';
         const folder = state.folders.find(f => f.id === state.activeFolderId);
         if (!folder) return;
@@ -371,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnStartSession.classList.remove('opacity-50');
 
         words.forEach(word => {
+            if (!word) return;
             const div = document.createElement('div');
             div.className = 'bg-slate-900 border border-slate-800 rounded-lg p-3 flex justify-between items-center';
             
@@ -398,11 +435,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getWordsByFolder(folder) {
-        if (folder.isPreset) {
-            return SYSTEM_WORDS_PRESET.filter(w => folder.wordIds.includes(w.id));
-        } else {
-            return state.customWords.filter(w => folder.wordIds.includes(w.id));
-        }
+        if (!folder || !folder.wordIds) return [];
+        return state.words.filter(w => folder.wordIds.includes(w.id));
     }
 
     function addWordToFolder(eng, pho, jap, hintText, ex) {
@@ -421,10 +455,11 @@ document.addEventListener('DOMContentLoaded', () => {
             srsLevel: 0
         };
 
-        // 新規単語に対してAIハズレ選択肢を動的生成
+        // 新規単語にAIハズレ選択肢を生成
         runAIFakeGenerator(newWord);
 
-        state.customWords.push(newWord);
+        // 統合単語DBに直接追加（永続保存）
+        state.words.push(newWord);
 
         const folder = state.folders.find(f => f.id === state.activeFolderId);
         if (folder) {
@@ -440,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.inputWordJap.value = '';
         elements.inputWordHint.value = '';
         elements.inputWordExample.value = '';
-        triggerToast("単語を追加し、AI選択肢を自動生成したピ！");
+        triggerToast("単語を追加し、AIひっかけを生成したピ！");
     }
 
     function deleteWordFromFolder(wordId) {
@@ -448,7 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (folder) {
             folder.wordIds = folder.wordIds.filter(id => id !== wordId);
         }
-        state.customWords = state.customWords.filter(w => w.id !== wordId);
+        // 実体から削除
+        state.words = state.words.filter(w => w.id !== wordId);
 
         saveState();
         renderFolderWordList();
@@ -463,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const words = getWordsByFolder(folder);
         if (words.length === 0) return;
 
+        // シャッフルして読み込み
         state.practiceWords = [...words].sort(() => Math.random() - 0.5);
         state.currentCardIndex = 0;
         state.combo = 0;
@@ -477,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderLearn() {
+        if (!elements.choicesContainer) return;
         elements.headerScore.textContent = state.score;
         elements.remainingCount.textContent = state.practiceWords.length - state.currentCardIndex;
 
@@ -486,12 +524,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.wordEnglish.textContent = current.english;
         elements.wordPhonetic.textContent = current.phonetic;
         
-        // ヒントのリセット
+        // ヒント・ポップアップ初期化
         state.isHintShown = false;
         elements.wordHint.classList.add('hidden');
         elements.cardHintNotice.textContent = "カードをタップしてヒントを表示";
 
-        // コンボ表示
+        // コンボ更新
         if (state.combo > 0) {
             elements.comboBadge.classList.remove('invisible');
             elements.comboCount.textContent = state.combo;
@@ -499,19 +537,25 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.comboBadge.classList.add('invisible');
         }
 
-        // 4択ボタンのシャッフル生成
+        // 4択ボタン構築
         elements.choicesContainer.innerHTML = '';
+        
+        //Choicesが無い場合（デバッグ用フォールバック）
+        if (!current.choices) {
+            runAIFakeGenerator(current);
+            saveState();
+        }
+
         const shuffledChoices = [...current.choices].sort(() => Math.random() - 0.5);
 
         shuffledChoices.forEach((choice, index) => {
             const btn = document.createElement('button');
-            btn.className = 'w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs py-3.5 px-4 rounded-xl font-bold active:scale-98 transition text-left flex items-center justify-between hover:border-slate-700';
+            btn.className = 'w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs py-3.5 px-4 rounded-xl font-bold active:scale-98 transition text-left flex items-center justify-between';
             btn.innerHTML = `
                 <span class="text-slate-500 font-extrabold mr-2">${String.fromCharCode(65 + index)}</span>
                 <span class="flex-1">${choice.text}</span>
             `;
             
-            // タップ判定
             btn.addEventListener('click', () => handleChoiceSelect(choice, btn));
             elements.choicesContainer.appendChild(btn);
         });
@@ -523,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.isHintShown = !state.isHintShown;
         if (state.isHintShown) {
-            elements.wordHint.textContent = current.hint || "ヒント情報なし";
+            elements.wordHint.textContent = current.hint || "ヒントはありませんピ";
             elements.wordHint.classList.remove('hidden');
             elements.cardHintNotice.textContent = "ヒント非表示中ピ";
         } else {
@@ -533,9 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleChoiceSelect(choice, clickedBtn) {
-        // ボタンを一時無効化（連打防止）
         const allButtons = elements.choicesContainer.querySelectorAll('button');
-        allButtons.forEach(btn => btn.disabled = true);
+        allButtons.forEach(btn => btn.disabled = true); // 連打防止
 
         const isCorrect = choice.isCorrect;
         const current = state.practiceWords[state.currentCardIndex];
@@ -543,7 +586,6 @@ document.addEventListener('DOMContentLoaded', () => {
         current.lastReviewed = Date.now();
 
         if (isCorrect) {
-            // 正答演出
             clickedBtn.classList.remove('bg-slate-900', 'border-slate-800', 'text-slate-200');
             clickedBtn.classList.add('bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200');
 
@@ -560,16 +602,14 @@ document.addEventListener('DOMContentLoaded', () => {
             state.score += 10 + (state.combo * 2);
             state.satiety = Math.max(0, state.satiety - 2);
 
-            // 正解単語は演習リストから削除
+            // 正解したので演習スタックから削除
             state.practiceWords.splice(state.currentCardIndex, 1);
-            
             if (gotFood) triggerToast("🍪 おやつを1個見つけたピ！");
         } else {
-            // 誤答演出
             clickedBtn.classList.remove('bg-slate-900', 'border-slate-800', 'text-slate-200');
             clickedBtn.classList.add('bg-rose-950/80', 'border-rose-700', 'text-rose-200');
 
-            // 正解のボタンをハイライトする
+            // 正解をビジュアル的に可視化
             allButtons.forEach(btn => {
                 const btnText = btn.querySelector('.flex-1').textContent;
                 const correctChoice = current.choices.find(c => c.isCorrect);
@@ -582,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
             current.srsLevel = Math.max(1, current.srsLevel - 1);
             state.combo = 0;
 
-            // 誤答は3問先に再挿入
+            // 誤答は3問後ろに並び替えて再出題
             const failed = state.practiceWords.splice(state.currentCardIndex, 1)[0];
             const insertIdx = Math.min(3, state.practiceWords.length);
             state.practiceWords.splice(insertIdx, 0, failed);
@@ -590,10 +630,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         saveState();
 
-        // 演出完了後に次の問題へ
         setTimeout(() => {
             if (state.practiceWords.length === 0) {
-                triggerToast("🎉 全ての単語をクリアしたピ！");
+                triggerToast("🎉 全てクリアしたピ！素晴らしいピ！");
                 showTab('learn');
             } else {
                 renderLearn();
@@ -609,20 +648,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function speakWord(text) {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const speech = new SpeechSynthesisUtterance(text);
-            speech.lang = 'en-US';
-            speech.rate = 0.95;
-            window.speechSynthesis.speak(speech);
+            try {
+                window.speechSynthesis.cancel();
+                const speech = new SpeechSynthesisUtterance(text);
+                speech.lang = 'en-US';
+                speech.rate = 0.95;
+                window.speechSynthesis.speak(speech);
+            } catch (e) {
+                console.warn("音声合成APIの呼び出しに失敗しました", e);
+            }
         }
     }
 
-    // ================= 7. 図鑑表示ロジック =================
+    // ================= 7. データ図鑑表示ロジック =================
     function renderDict() {
+        if (!elements.dictList) return;
         elements.dictList.innerHTML = '';
-        const allWords = [...SYSTEM_WORDS_PRESET, ...state.customWords];
         
-        allWords.forEach(word => {
+        state.words.forEach(word => {
+            if (!word) return;
             const strength = calculateStrength(word);
             const total = word.correctCount + word.incorrectCount;
             const stateStr = word.lastReviewed ? `SRS Lv.${word.srsLevel}` : '未学習';
@@ -697,11 +741,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function feedPet() {
         if (state.foods <= 0) {
-            triggerToast("おやつ（🍪）が足りないピ！単語を解いて獲得してピ！");
+            triggerToast("おやつ（🍪）がないピ！単語をクリアしてピ！");
             return;
         }
         if (state.satiety >= 100) {
-            triggerToast("お腹いっぱいだピ！");
+            triggerToast("もうお腹いっぱいだピ！");
             return;
         }
 
@@ -712,7 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.xp >= 100) {
             state.level += 1;
             state.xp -= 100;
-            triggerToast("🎉 レベルアップ！進化に一歩近づいたピ！");
+            triggerToast("🎉 レベルアップ！ペットが進化したピ！");
         }
 
         saveState();
@@ -728,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function triggerToast(message) {
         const toast = document.createElement('div');
-        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-2.5 px-4 rounded-xl shadow-2xl z-50 transition-opacity duration-300';
+        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-2.5 px-4 rounded-xl shadow-2xl z-50 transition-opacity duration-300 pointer-events-none';
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => {
@@ -737,21 +781,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     }
 
-    // ================= 9. イベント設定 =================
+    // ================= 9. 全体イベントバインド =================
     function setupEvents() {
+        // 起動時：タイトルを2秒固定表示してフェードアウト
         setTimeout(() => {
-            elements.viewTitle.classList.add('opacity-0');
-            setTimeout(() => {
-                elements.viewTitle.classList.add('hidden');
-                elements.mainApp.classList.remove('hidden');
-            }, 500);
+            if (elements.viewTitle) {
+                elements.viewTitle.classList.add('opacity-0');
+                setTimeout(() => {
+                    elements.viewTitle.classList.add('hidden');
+                    if (elements.mainApp) elements.mainApp.classList.remove('hidden');
+                }, 500);
+            }
         }, 2000);
 
+        // タブ切り替え
         elements.tabLearn.addEventListener('click', () => showTab('learn'));
         elements.tabDict.addEventListener('click', () => showTab('dict'));
         elements.tabPet.addEventListener('click', () => showTab('pet'));
 
-        elements.btnOpenCreateFolder.addEventListener('click', () => elements.modalCreateFolder.classList.remove('hidden'));
+        // 新規フォルダ作成
+        elements.btnOpenCreateFolder.addEventListener('click', () => {
+            elements.modalCreateFolder.classList.remove('hidden');
+        });
         elements.btnCancelFolder.addEventListener('click', () => {
             elements.modalCreateFolder.classList.add('hidden');
             elements.inputFolderName.value = '';
@@ -760,10 +811,14 @@ document.addEventListener('DOMContentLoaded', () => {
             createFolder(elements.inputFolderName.value);
         });
 
+        // フォルダ詳細戻る・開始
         elements.btnBackToFolders.addEventListener('click', () => showTab('learn'));
         elements.btnStartSession.addEventListener('click', startPractice);
 
-        elements.btnOpenAddWord.addEventListener('click', () => elements.modalAddWord.classList.remove('hidden'));
+        // 単語の追加
+        elements.btnOpenAddWord.addEventListener('click', () => {
+            elements.modalAddWord.classList.remove('hidden');
+        });
         elements.btnCancelAddWord.addEventListener('click', () => {
             elements.modalAddWord.classList.add('hidden');
         });
@@ -777,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        // 演習
+        // クイズ操作
         elements.wordQuestionCard.addEventListener('click', (e) => {
             if (e.target.closest('#btn-speak')) return;
             toggleHint();
@@ -787,11 +842,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         elements.btnSpeak.addEventListener('click', speakCurrent);
 
-        // 育成
+        // ペット餌やり
         elements.btnFeed.addEventListener('click', feedPet);
 
-        // ダイアログ
-        elements.btnCloseModal.addEventListener('click', () => elements.dictModal.classList.add('hidden'));
+        // 図鑑クローズ
+        elements.btnCloseModal.addEventListener('click', () => {
+            elements.dictModal.classList.add('hidden');
+        });
         elements.dictModal.addEventListener('click', (e) => {
             if (e.target === elements.dictModal) elements.dictModal.classList.add('hidden');
         });
